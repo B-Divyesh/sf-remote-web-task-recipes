@@ -1,0 +1,16 @@
+{
+  "slug": "remote-web-task-recipes",
+  "title": "Remote Web Task Recipes",
+  "artifact_class": "browser-extension",
+  "user": "A low-vision or screen-reader user who must complete recurring tasks in browser-delivered remote or legacy software that exposes little usable accessibility metadata.",
+  "smallest_useful_product": "A browser extension where a user or support worker records named, keyboard-reachable visual landmarks for one browser app and attaches concise spoken task steps. It uses user-triggered tab screenshots/OCR only to help place landmarks.",
+  "success_measure": "In a five-task pilot, a participant completes at least four recurring tasks without sighted assistance after creating no more than ten landmarks.",
+  "monetization": "one-time",
+  "constraints": [
+    "Process screenshots locally and never upload page pixels or DOM text by default.",
+    "Encrypt exported recipes.",
+    "Require a deliberate user gesture before capture.",
+    "Do not claim compatibility with every remote desktop.",
+    "Do not automate clicks, capture credentials, or surveil employees."
+  ]
+}
