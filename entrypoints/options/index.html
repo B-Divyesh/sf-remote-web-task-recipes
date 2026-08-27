@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Notebook editor — Remote Web Task Recipes</title></head>
+  <body>
+    <a class="skip-link" href="#main">Skip to notebook</a>
+    <header class="app-header"><div class="wordmark"><span class="mark" aria-hidden="true"></span><div><p class="eyebrow">Private field notebook</p><h1>Remote Web Task Recipes</h1></div></div><p id="global-status" class="status" role="status" aria-live="polite">Saved on this device</p></header>
+    <main id="main" class="shell">
+      <aside class="sheet sidebar" aria-labelledby="notebooks-title">
+        <div class="sidebar-head"><h2 id="notebooks-title">Notebooks</h2><button id="new-recipe" type="button">New</button></div>
+        <ul id="recipe-list" class="recipe-list"></ul>
+        <button id="data-tools" class="secondary" type="button">Backup & appearance</button>
+        <p class="meta">Nothing leaves your browser unless you choose the checkout link.</p>
+      </aside>
+      <section id="workspace" class="sheet" aria-live="polite"></section>
+    </main>
+    <div id="modal" class="modal-backdrop" hidden></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
