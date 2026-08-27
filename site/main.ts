@@ -31,6 +31,9 @@ function showLicenseStatus(verdict: Verdict) {
     ? 'Supporter Pack active. Paste this license into the extension to use the extra covers.'
     : 'This license is no longer active. The free extension and all accessibility features still work.';
   status.dataset.kind = verdict.valid ? 'success' : 'error';
+  const row = document.querySelector<HTMLElement>('#license-token-row');
+  const input = document.querySelector<HTMLInputElement>('#returned-license');
+  if (row && input) { row.hidden = !verdict.valid; input.value = verdict.valid ? verdict.token : ''; }
 }
 
 async function handleLicense() {
@@ -54,6 +57,13 @@ async function handleLicense() {
 
 const dialog = document.querySelector<HTMLDialogElement>('#restore-dialog');
 document.querySelector('#restore-license')?.addEventListener('click', () => dialog?.showModal());
+document.querySelector('#copy-license')?.addEventListener('click', async () => {
+  const input = document.querySelector<HTMLInputElement>('#returned-license');
+  if (!input) return;
+  await navigator.clipboard.writeText(input.value);
+  const status = document.querySelector<HTMLElement>('#license-status');
+  if (status) status.textContent = 'License copied. Open Backup & appearance in the extension and choose “Have a license?”.';
+});
 dialog?.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
 dialog?.querySelector('form')?.addEventListener('submit', async (event) => {
   event.preventDefault();

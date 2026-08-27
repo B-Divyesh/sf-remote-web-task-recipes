@@ -8,6 +8,7 @@ export default defineConfig({
     description: 'User-owned landmarks and spoken steps for inaccessible browser-delivered software.',
     version: '1.0.0',
     permissions: ['activeTab', 'storage', 'scripting'],
+    host_permissions: ['<all_urls>'],
     action: { default_title: 'Open task recipes' },
     options_ui: { page: 'options.html', open_in_tab: true },
     commands: {
