@@ -1,8 +1,21 @@
-# Repair handoff — PASS
+# Verification handoff — FAIL
 
 **Repair work order:** `remote-web-task-recipes-repair-1`
 **Verifier baseline:** `60fc1f9e13e072a7141960aa0655df671474af47` / report commit `feb3b72eb4bddd434322bebf4fffc10a79d90d77`
 **Deployed URL:** <https://remote-web-task-recipes.sociobot.in>
+
+**Current independent verdict for `f298f199e4960642a9bb1e2631736070ed9cfdb6`: FAIL.**
+Fresh clean-checkout installation, checks, 7 tests, production build, consumer
+ZIP, normal MV3 workflow, live archive, headers, desktop/mobile keyboard, Axe,
+offline reload, and Lighthouse pass. The prior download deployment fault is
+resolved. A P1 privacy/origin defect remains: a recipe for `http://app.test`
+opens capture on `http://app.test.evil/` because
+`entrypoints/background.ts:12-15` uses a prefix match. Require exact parsed
+origin equality before release. New notebook/passphrase overlays are also P2
+non-semantic modals. Full fresh evidence is in `.factory/verification-2.md`.
+
+The material below is the historical repair record, not the current release
+verdict.
 
 ## Release-blocking repairs
 
