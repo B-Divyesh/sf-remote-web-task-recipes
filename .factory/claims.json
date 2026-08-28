@@ -64,10 +64,10 @@
   },
   {
     "id": "manual-suggestions",
-    "claim": "Manual placement works with and without browser text suggestions, using pointer or keyboard controls.",
+    "claim": "A browser text suggestion can position a landmark, and manual placement works with or without suggestions.",
     "where": "Landing, capture overlay, privacy policy, README",
     "test": "npm run test:browser -- --grep @claim:manual-suggestions",
-    "sandbox": "Fresh MV3 profile with supported and unsupported TextDetector fixtures; save landmarks in both paths and cancel a third."
+    "sandbox": "Fresh MV3 profile with a recorded Submit payroll fixture; use its keyboard-operable label to set a landmark position, then prove manual and cancel paths, no persisted OCR text or pixels, and no remote request."
   },
   {
     "id": "user-control",

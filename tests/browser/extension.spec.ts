@@ -88,7 +88,10 @@ async function setTextDetector(editor: Page, available: boolean): Promise<void> 
           class FixtureTextDetector {
             async detect() {
               document.documentElement.dataset.detectorCalled = 'true';
-              return [{ rawValue: 'Submit payroll' }];
+              return [{
+                rawValue: 'Submit payroll',
+                boundingBox: { x: innerWidth * .4, y: innerHeight * .4, width: innerWidth * .2, height: innerHeight * .2 }
+              }];
             }
           }
           Object.defineProperty(globalThis, 'TextDetector', { configurable: true, value: FixtureTextDetector });
@@ -274,20 +277,52 @@ test('@claim:temporary-capture screenshot pixels disappear after placement and a
   }
 });
 
-test('@claim:manual-suggestions manual placement works with and without browser text suggestions', async () => {
+async function accessibilityNames(page: Page): Promise<string[]> {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const snapshot = await session.send('Accessibility.getFullAXTree') as { nodes: Array<{ name?: { value?: string } }> };
+    return snapshot.nodes.flatMap((node) => typeof node.name?.value === 'string' ? [node.name.value] : []);
+  } finally {
+    await session.detach();
+  }
+}
+
+test('@claim:manual-suggestions a detected text label can position a landmark and manual placement remains available', async () => {
   const server = await startOriginServer();
   const { context, extensionId, profile } = await launchExtension();
+  const requests: string[] = [];
+  context.on('request', (request) => {
+    if (/^https?:/.test(request.url())) requests.push(request.url());
+  });
   try {
     const app = await context.newPage();
     await app.goto('http://app.test/');
     const editor = await context.newPage();
     await editor.goto(`chrome-extension://${extensionId}/options.html`);
-    await seedNotebook(editor);
+    const noOcrRecipe = structuredClone(sampleRecipe);
+    noOcrRecipe.name = 'Weekly task';
+    noOcrRecipe.tasks[0].name = 'Finish weekly task';
+    noOcrRecipe.tasks[0].steps = [{ id: 'step-1', text: 'Finish the weekly task.' }];
+    await seedNotebook(editor, noOcrRecipe);
 
     await setTextDetector(editor, true);
-    await sendCapture(editor, 'First manual landmark');
+    await sendCapture(editor, 'Suggested landmark');
     await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-suggestion', 'available');
     await expect(app.locator('html')).toHaveAttribute('data-detector-called', 'true');
+    await expect.poll(() => accessibilityNames(app)).toContain('Place landmark at detected text: Submit payroll');
+    await app.keyboard.press('Tab');
+    await app.keyboard.press('Enter');
+    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-suggestion-selected', 'true');
+    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-x', '0.50');
+    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-y', '0.50');
+    await app.keyboard.press('Tab');
+    await app.keyboard.press('Enter');
+    await expect(app.locator('#rwtr-overlay')).toHaveCount(0);
+
+    await app.waitForTimeout(1100);
+    await setTextDetector(editor, false);
+    await sendCapture(editor, 'Manual landmark');
+    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-suggestion', 'unavailable');
     await app.keyboard.press('ArrowRight');
     await app.keyboard.press('Shift+ArrowDown');
     await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-x', '0.51');
@@ -295,22 +330,19 @@ test('@claim:manual-suggestions manual placement works with and without browser 
     await app.keyboard.press('Enter');
     await expect(app.locator('#rwtr-overlay')).toHaveCount(0);
 
-    await app.waitForTimeout(1100);
-    await setTextDetector(editor, false);
-    await sendCapture(editor, 'Second manual landmark');
-    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-suggestion', 'unavailable');
-    await app.mouse.click(100, 200);
-    await expect(app.locator('#rwtr-overlay')).toHaveCount(0);
-
     const stored = await storageSnapshot(editor) as { notebookState: { recipes: Array<{ landmarks: Array<{ name: string; x: number; y: number }> }> } };
     expect(stored.notebookState.recipes[0].landmarks).toHaveLength(2);
-    expect(stored.notebookState.recipes[0].landmarks[0]).toMatchObject({ name: 'First manual landmark', x: .51, y: .55 });
+    expect(stored.notebookState.recipes[0].landmarks[0]).toMatchObject({ name: 'Suggested landmark', x: .5, y: .5 });
+    expect(stored.notebookState.recipes[0].landmarks[1]).toMatchObject({ name: 'Manual landmark', x: .51, y: .55 });
+    expect(JSON.stringify(stored)).not.toContain('Submit payroll');
+    expect(JSON.stringify(stored)).not.toContain('data:image');
 
     await app.waitForTimeout(1100);
     await sendCapture(editor, 'Cancelled landmark');
     await app.keyboard.press('Escape');
     const afterCancel = await storageSnapshot(editor) as typeof stored;
     expect(afterCancel.notebookState.recipes[0].landmarks).toHaveLength(2);
+    expect(requests.every((url) => new URL(url).origin === 'http://app.test')).toBe(true);
   } finally {
     await context.close();
     await rm(profile, { recursive: true, force: true });

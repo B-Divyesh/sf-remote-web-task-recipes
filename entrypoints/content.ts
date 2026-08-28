@@ -4,6 +4,7 @@ import type { ExtensionMessage, Landmark, TaskRecipe } from '../src/types';
 
 type TextRegion = { rawValue?: string; boundingBox?: DOMRectReadOnly };
 type TextDetectorConstructor = new () => { detect(source: ImageBitmapSource): Promise<TextRegion[]> };
+type DetectedSuggestion = { text: string; x: number; y: number };
 
 const overlayCss = `
   :host{all:initial;color:#172b32;font-family:Verdana,sans-serif;font-size:18px;line-height:1.5}
@@ -11,10 +12,11 @@ const overlayCss = `
   .shot{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:.58}
   .aim{position:absolute;width:44px;height:44px;transform:translate(-50%,-50%);border:4px solid #fff;border-radius:50%;box-shadow:0 0 0 5px #a13d32;pointer-events:none}
   .aim:before,.aim:after{content:"";position:absolute;background:#fff}.aim:before{height:4px;width:76px;left:-20px;top:16px}.aim:after{width:4px;height:76px;left:16px;top:-20px}
-  .panel{position:absolute;right:24px;top:24px;width:min(440px,calc(100% - 48px));background:#fffdf7;color:#172b32;border:3px solid #172b32;border-radius:8px;padding:20px;box-shadow:6px 7px 0 #172b32}
+  .panel{position:absolute;right:24px;top:24px;width:min(440px,calc(100% - 48px));max-height:calc(100% - 48px);overflow:auto;background:#fffdf7;color:#172b32;border:3px solid #172b32;border-radius:8px;padding:20px;box-shadow:6px 7px 0 #172b32}
   .panel h2{font:700 22px/1.25 ui-monospace,monospace;margin:0 0 8px}.panel p{margin:6px 0}.keys{color:#45585d;font-size:15px}
   button{min-height:44px;border:2px solid #172b32;border-radius:5px;padding:8px 16px;background:#145f70;color:#fff;font:700 16px/1 Verdana,sans-serif;cursor:pointer;margin:8px 8px 0 0}
   button.secondary{background:#fffdf7;color:#172b32}button:focus-visible{outline:4px solid #8bd4e2;outline-offset:3px}
+  .suggestions{margin:16px 0 8px;padding:12px;border-left:5px solid #a13d32;background:#edf5f2}.suggestions h3{margin:0;font:700 16px/1.25 ui-monospace,monospace}.suggestion-help{color:#45585d;font-size:15px}.suggestion-list{display:grid;gap:8px}.suggestion-list button{width:100%;margin:0;justify-content:flex-start;text-align:left}
   .guide{position:fixed;z-index:2147483647;right:20px;top:20px;width:min(460px,calc(100% - 40px));background:#fffdf7;color:#172b32;border:3px solid #172b32;border-radius:8px;padding:20px;box-shadow:7px 8px 0 #172b32}
   .pin{position:fixed;z-index:2147483646;width:64px;height:64px;transform:translate(-50%,-50%);border:6px solid #a13d32;border-radius:50%;box-shadow:0 0 0 4px #fff;pointer-events:none}
   .pin span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#172b32;color:#fff;border-radius:50%;min-width:30px;height:30px;text-align:center;font:700 18px/30px monospace}
@@ -52,6 +54,22 @@ async function detectText(dataUrl: string): Promise<TextRegion[]> {
   } catch { return []; }
 }
 
+function textSuggestions(regions: TextRegion[], image: HTMLImageElement): DetectedSuggestion[] {
+  const width = image.naturalWidth || innerWidth;
+  const height = image.naturalHeight || innerHeight;
+  if (!width || !height) return [];
+  return regions.flatMap((region) => {
+    const text = region.rawValue?.trim();
+    const box = region.boundingBox;
+    if (!text || !box || ![box.x, box.y, box.width, box.height].every(Number.isFinite) || box.width <= 0 || box.height <= 0) return [];
+    return [{
+      text,
+      x: Math.min(1, Math.max(0, (box.x + box.width / 2) / width)),
+      y: Math.min(1, Math.max(0, (box.y + box.height / 2) / height))
+    }];
+  });
+}
+
 async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPTURE' }>) {
   const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const { host, root } = mount();
@@ -61,6 +79,7 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
     <div class="aim" aria-hidden="true"></div>
     <section class="panel"><h2 id="rwtr-cap-title">Place “${escapeHtml(message.name)}”</h2>
       <p class="status" role="status">Screenshot stays on this device. Checking for browser-local text…</p>
+      <section class="suggestions" aria-labelledby="rwtr-suggestions-title" hidden><h3 id="rwtr-suggestions-title">Place at detected text</h3><p class="suggestion-help">Choose a label to move the landmark there. You can still adjust it with Arrow keys.</p><div class="suggestion-list"></div></section>
       <p class="keys">Move the pointer, or use Arrow keys. Shift + Arrow moves farther. Press Enter to save; Escape cancels.</p>
       <button type="button" class="save">Save this point</button><button type="button" class="secondary cancel">Cancel</button>
     </section></div>`;
@@ -68,16 +87,38 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
   const shot = root.querySelector<HTMLImageElement>('.shot')!;
   const aim = root.querySelector<HTMLElement>('.aim')!;
   const status = root.querySelector<HTMLElement>('.status')!;
+  const suggestionSection = root.querySelector<HTMLElement>('.suggestions')!;
+  const suggestionList = root.querySelector<HTMLElement>('.suggestion-list')!;
   shot.src = message.screenshot;
   let x = .5, y = .5;
   const paint = () => { aim.style.left = `${x * 100}%`; aim.style.top = `${y * 100}%`; };
   const exposePosition = () => { host.dataset.x = x.toFixed(2); host.dataset.y = y.toFixed(2); };
   paint(); exposePosition();
-  const regions = await detectText(message.screenshot);
-  host.dataset.suggestion = regions.length ? 'available' : 'unavailable';
-  status.textContent = regions.length
-    ? `Your browser found ${regions.length} visible text areas. The screenshot and suggestions stayed on this device.`
-    : 'Manual placement is ready. This browser did not offer text suggestions.';
+  await shot.decode().catch(() => undefined);
+  let suggestions = textSuggestions(await detectText(message.screenshot), shot);
+  host.dataset.suggestion = suggestions.length ? 'available' : 'unavailable';
+  if (suggestions.length) {
+    suggestionSection.hidden = false;
+    suggestions.forEach((suggestion) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'secondary';
+      button.textContent = suggestion.text;
+      button.setAttribute('aria-label', `Place landmark at detected text: ${suggestion.text}`);
+      button.addEventListener('click', () => {
+        x = suggestion.x;
+        y = suggestion.y;
+        paint();
+        exposePosition();
+        host.dataset.suggestionSelected = 'true';
+        status.textContent = `Landmark moved to detected text: ${suggestion.text}. Adjust with Arrow keys or save this point.`;
+      });
+      suggestionList.append(button);
+    });
+    status.textContent = `Choose from ${suggestions.length} visible text suggestion${suggestions.length === 1 ? '' : 's'}, or place the landmark manually. Suggestions stay on this device.`;
+  } else {
+    status.textContent = 'Manual placement is ready. This browser did not offer text suggestions.';
+  }
   const move = (event: PointerEvent) => {
     if ((event.target as HTMLElement).closest('.panel')) return;
     x = Math.min(1, Math.max(0, event.clientX / innerWidth));
@@ -88,7 +129,13 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
   veil.addEventListener('click', (event) => {
     if (!(event.target as HTMLElement).closest('.panel')) void save();
   });
-  const close = () => { shot.removeAttribute('src'); host.remove(); if (returnFocus?.isConnected) returnFocus.focus(); };
+  const close = () => {
+    suggestions = [];
+    suggestionList.replaceChildren();
+    shot.removeAttribute('src');
+    host.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  };
   const save = async () => {
     const state = await loadState();
     const recipe = state.recipes.find((item) => item.id === message.recipeId);

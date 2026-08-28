@@ -124,7 +124,9 @@ test('all public routes have complete metadata, focus, mobile layout, and no ser
   const firstScreenAction = page.getByRole('link', { name: 'Try it with sample data' });
   await expect(firstScreenAction).toBeVisible();
   expect((await firstScreenAction.boundingBox())!.y).toBeLessThan(844);
-  expect((await page.locator('.facts span').last().boundingBox())!.y).toBeLessThan(844);
+  expect((await page.locator('.facts li').last().boundingBox())!.y).toBeLessThan(844);
+  const navDownload = page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Download extension' });
+  expect(await navDownload.evaluate((link) => getComputedStyle(link).backgroundColor)).not.toBe(await firstScreenAction.evaluate((link) => getComputedStyle(link).backgroundColor));
   await firstScreenAction.click();
   await expect(page.locator('main h1')).toBeFocused();
   await page.goBack();

@@ -45,8 +45,8 @@ During placement, your browser may identify text visible in the temporary screen
 A screenshot exists only while landmark placement is open.
 The screenshot is not kept in extension storage.
 
-Your browser may offer local text suggestions during placement.
-Manual placement remains available with or without suggestions.
+Your browser may suggest visible text during placement.
+Choose a label to position a landmark, or place it manually.
 Notebook data uses storage inside the browser extension.
 Each notebook works only on the exact website where you created it.
 
