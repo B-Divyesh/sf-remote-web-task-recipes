@@ -18,8 +18,8 @@ Live site: <https://remote-web-task-recipes.sociobot.in>
 - Task steps linked to landmarks, with visible and spoken guide playback.
 - AES-256-GCM encrypted export/import with a passphrase-derived key.
 - A quick-launch popup and a responsive, keyboard-operable notebook editor.
-- Optional $19 one-time Supporter Pack for cosmetic covers. The complete
-  accessibility workflow and encrypted data export are free.
+- The complete local accessibility workflow, three notebook covers, and
+  encrypted data export are free. There is no account, checkout, or subscription.
 
 All recipe data remains in extension local storage. Screenshot pixels and OCR
 results are never uploaded or saved. See [privacy](site/privacy/index.html) and
@@ -57,18 +57,19 @@ remote app, display scaling, or window layout changes.
 Requires Node.js 20+ and npm.
 
 ```bash
-npm install
+npm ci
 npm run dev            # WXT extension development
 npm run dev:site       # landing site development
-npm run check          # strict TypeScript
-npm test               # Vitest
+npm run check          # strict TypeScript; prepares WXT types itself
+npm test               # Vitest; prepares WXT types itself
 npm run build          # extension + site + downloadable ZIP
+npm run test:package   # inspect the staged ZIP as a consumer would
 ```
 
 The factory's exact static-site command is:
 
 ```bash
-npm run build:site     # writes index.html to dist/site/
+npm run build:site     # writes the site and extension ZIP to dist/site/
 ```
 
 The full build writes the deployable landing site to `dist/site/`, the loadable
@@ -78,14 +79,13 @@ extension to `.output/chrome-mv3/`, and the packaged extension to
 ## Architecture and permissions
 
 - WXT + TypeScript, Manifest V3.
-- `storage`: stores notebooks and an optional license locally.
+- `storage`: stores notebooks locally.
 - `activeTab`: supports the explicit visible-tab screenshot gesture.
 - `scripting` and `<all_urls>` host access: inject the capture/guide overlay into
   the browser app selected by the user. The content script does not read or send
   DOM text.
-- Vite static landing site with no runtime CDN, telemetry, or analytics.
-- The staging checkout/verify endpoint is `pilot-api.sociobot.in`; the factory
-  swaps this to the production Sociobot API at release.
+- Vite static landing site with no runtime CDN, telemetry, analytics, or remote
+  API calls.
 
 ## Project records
 

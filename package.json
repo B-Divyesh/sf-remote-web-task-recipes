@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "wxt",
     "dev:site": "vite --config site/vite.config.ts",
+    "prepare:wxt": "wxt prepare",
     "build:extension": "wxt build",
-    "build:site": "vite build --config site/vite.config.ts",
+    "build:site:assets": "vite build --config site/vite.config.ts",
+    "build:site": "npm run build:site:assets && npm run build:extension && npm run package:extension",
     "package:extension": "wxt zip && node scripts/copy-extension.mjs",
-    "build": "npm run build:extension && npm run build:site && npm run package:extension",
-    "test": "vitest run",
-    "check": "tsc --noEmit"
+    "build": "npm run build:site",
+    "test": "npm run prepare:wxt && vitest run",
+    "check": "npm run prepare:wxt && tsc --noEmit",
+    "test:package": "node scripts/verify-package.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.2.6"
