@@ -84,7 +84,7 @@ test('editor overlays expose modal semantics and restore keyboard focus', async 
   }
 });
 
-test('capture and guide dispatch reject a look-alike origin in a real MV3 session', async () => {
+test('@claim:capture-and-origin-scope capture and guide dispatch reject a look-alike origin in a real MV3 session', async () => {
   const server = await startOriginServer();
   const { context, extensionId, profile } = await launchExtension();
   try {

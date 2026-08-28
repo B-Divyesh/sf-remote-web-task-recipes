@@ -9,7 +9,7 @@ describe('local notebook model', () => {
     expect(normalizeState({ recipes: [] }).preferences.speakSteps).toBe(true);
   });
 
-  it('matches recipes to the exact site origin', () => {
+  it('@claim:origin-scoped matches recipes to the exact site origin', () => {
     const recipe = createRecipe('Timesheets', 'https://remote.example.test');
     expect(recipeForOrigin([recipe], 'https://remote.example.test/week/4')).toEqual([recipe]);
     expect(recipeForOrigin([recipe], 'https://other.example.test/')).toEqual([]);
@@ -18,7 +18,7 @@ describe('local notebook model', () => {
 });
 
 describe('encrypted export', () => {
-  it('round-trips notebook data without exposing its text', async () => {
+  it('@claim:encrypted-backup round-trips notebook data without exposing its text', async () => {
     const state = structuredClone(EMPTY_STATE);
     state.recipes.push(createRecipe('Private payroll task', 'https://work.example.test'));
     const encrypted = await encryptNotebook(state, 'correct horse battery staple');

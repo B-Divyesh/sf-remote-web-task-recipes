@@ -1,11 +1,6 @@
 {
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": [
-      "/assets/*",
-      "/downloads/*",
-      "/*.{css,js,png,jpg,jpeg,svg,webp,ico,woff2,json,txt,xml,wasm,zip}"
-    ]
+  "responseOverrides": {
+    "404": { "rewrite": "/404.html", "statusCode": 404 }
   },
   "globalHeaders": {
     "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests",

@@ -1,5 +1,5 @@
-const CACHE = 'rwtr-site-v2';
-const SHELL = ['/', '/privacy/', '/terms/', '/assets/hero-notebook-800.webp'];
+const CACHE = 'rwtr-site-v3';
+const SHELL = ['/', '/demo/', '/privacy/', '/terms/', '/404.html', '/site.css', '/assets/hero-notebook-800.webp'];
 self.addEventListener('install', (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))));
 self.addEventListener('activate', (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))));
 self.addEventListener('fetch', (event) => {

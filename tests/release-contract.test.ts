@@ -5,10 +5,11 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(import.meta.dirname, '..');
 
 describe('static release contract', () => {
-  it('keeps extension downloads out of the single-page-app fallback', async () => {
+  it('serves extension downloads directly and uses a real 404 response', async () => {
     const raw = await readFile(resolve(root, 'site/public/staticwebapp.config.json'), 'utf8');
-    const config = JSON.parse(raw) as { navigationFallback: { exclude: string[] }; routes: Array<{ route: string; headers?: Record<string, string> }> };
-    expect(config.navigationFallback.exclude).toContain('/downloads/*');
+    const config = JSON.parse(raw) as { navigationFallback?: unknown; responseOverrides: Record<string, { rewrite: string; statusCode: number }>; routes: Array<{ route: string; headers?: Record<string, string> }> };
+    expect(config.navigationFallback).toBeUndefined();
+    expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html', statusCode: 404 });
     expect(config.routes).toContainEqual({ route: '/downloads/*', headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } });
   });
 

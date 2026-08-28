@@ -13,5 +13,6 @@ if (!stdout.includes('No errors detected')) throw new Error('Extension archive f
 const entries = (await execFileAsync('unzip', ['-Z1', archive])).stdout;
 if (!entries.includes('manifest.json')) throw new Error('Extension archive has no manifest.json.');
 const config = JSON.parse(await readFile('dist/site/staticwebapp.config.json', 'utf8'));
-if (!config.navigationFallback?.exclude?.includes('/downloads/*')) throw new Error('Static host fallback must exclude downloadable extension archives.');
-console.log(`Verified consumer package: ${archive} (${archiveStats.size} bytes), manifest present, fallback excludes downloads.`);
+if (config.navigationFallback) throw new Error('Static site must not rewrite unknown routes to the landing page.');
+if (config.responseOverrides?.['404']?.rewrite !== '/404.html' || config.responseOverrides?.['404']?.statusCode !== 404) throw new Error('Static host must serve the designed 404 page with status 404.');
+console.log(`Verified consumer package: ${archive} (${archiveStats.size} bytes), manifest present, direct downloads, and a real 404 response.`);

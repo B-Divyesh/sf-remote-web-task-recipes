@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://remote-web-task-recipes.sociobot.in/sitemap.xml

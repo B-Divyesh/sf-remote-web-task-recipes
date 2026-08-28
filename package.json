@@ -14,6 +14,8 @@
     "build": "npm run build:site",
     "test": "npm run prepare:wxt && vitest run",
     "test:browser": "npm run build:extension && playwright test",
+    "test:site": "npm run build:site:assets && playwright test -c playwright.site.config.ts",
+    "test:claims": "npm run build:site:assets && playwright test -c playwright.site.config.ts",
     "check": "npm run prepare:wxt && tsc --noEmit",
     "test:package": "node scripts/verify-package.mjs"
   },
