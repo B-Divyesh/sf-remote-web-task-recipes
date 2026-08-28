@@ -1,34 +1,15 @@
-# Repair handoff — ready for deployment
+# Verification handoff — PASS
 
-**Work order:** `remote-web-task-recipes-repair-2`
-**Verifier report repaired:** `.factory/verification-2.md` at report commit
-`938f74f17e71e658873e4e946294c6f1e2d0a2b9` (candidate
-`60fc1f9e13e072a7141960aa0655df671474af47`)
+**Work order:** `remote-web-task-recipes-verify-3`
+**Tested candidate:** `547da0a2ce5b10622379a7a7bc8da2f108a005d4`
+**Live URL:** <https://remote-web-task-recipes.sociobot.in>
+**Report:** `.factory/verification-3.md`
 
-## Repairs
+## Result
 
-1. **Exact-origin capture and guide dispatch (P1):** The background worker no
-   longer uses a URL prefix comparison. `src/tab-dispatch.ts` parses URLs,
-   admits only `http:`/`https:` origins, and selects only a tab whose parsed
-   origin exactly equals the notebook origin. It cannot select
-   `http://app.test.evil/` for `http://app.test`. Invalid/non-web origins are
-   rejected with an actionable error. The notebook creation form uses the same
-   parser, preventing non-web origins from being saved.
-2. **Modal semantics and keyboard restoration (P2):** The new-notebook and
-   passphrase overlays now receive `role="dialog"`, `aria-modal="true"`, and a
-   heading label; focus moves into the dialog, is trapped while it is open, and
-   returns to the connected triggering control on Escape/cancel/success.
-   Existing confirm-delete `alertdialog` behavior remains intact.
-3. **Regression coverage:** Unit tests cover exact-origin selection plus both
-   screenshot capture and guide message dispatch. A pinned Playwright 1.58.2
-   MV3 suite loads the unpacked production extension in Chromium and verifies
-   the real `app.test` / `app.test.evil` case, modal semantics, keyboard focus
-   restoration, 390px editor layout, no editor console errors, and zero
-   serious/critical Axe findings. Vitest ignores those Playwright specs.
+**PASS.** Fresh clean-checkout verification confirms the live static site and downloadable MV3 extension match the candidate content. The prior deployment-only failure and exact-origin/modal regressions do not reproduce.
 
-## Verification
-
-Performed on 2026-08-28 UTC with Node 22.23.2 / npm 10.9.8:
+## How verified
 
 ```bash
 npm ci
@@ -37,70 +18,22 @@ npm test
 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npm run test:browser
 npm run build
 npm run test:package
-npm audit --omit=dev
+npm audit --omit=dev --audit-level=critical
 ```
 
-- Type check passed. Vitest passed **11/11** tests: notebook/crypto,
-  release-contract, and exact-origin routing tests.
-- Playwright passed **2/2** production-MV3 tests. The deliberate look-alike
-  test created `http://app.test.evil/` first, then `http://app.test/`; capture
-  and guide overlays appeared only on the intended origin. Dialogs returned
-  focus to **New** and **Export encrypted backup** after Escape. The editor
-  passed the 390×844 no-overflow/single-main/single-h1 check and Axe 4.11.4
-  reported zero serious/critical violations before and during a dialog.
-- Production build passed and produced `.output/chrome-mv3/` (155,730 bytes)
-  plus `dist/site/downloads/remote-web-task-recipes.zip` (131,630 bytes).
-  Consumer ZIP validation passed: archive integrity, `manifest.json`, and the
-  static-host download fallback exclusion all succeeded.
-- Production-only audit reported **0 vulnerabilities**. `npm ci` retains the
-  inherited 10 development-only advisories in the toolchain.
-- Local static-site Chromium smoke at desktop and 390×844 checked home,
-  privacy, and terms: every page has title/lang/one h1/main/complete image alt
-  text, zero serious/critical Axe 4.11.4 violations, no console/page errors,
-  no mobile overflow, and requests only to the local product origin. The
-  factory `verify-url.sh` also passed the home-page desktop/mobile load check
-  (592 ms) with zero errors.
+All passed: 11/11 Vitest, 2/2 real-MV3 Playwright, exact production build and consumer ZIP validation, and zero production audit findings. Independent Chromium exercised notebook creation, deliberate keyboard placement, linked task guidance, invalid-passphrase recovery, encrypted export, exact-origin look-alike rejection, desktop/mobile layout, focus/modal behavior, Axe, offline reload, response headers, outbound-request policy, and bundle budgets.
 
-## Deployment verification
+The live ZIP is `200 application/zip`, 131,630 bytes, immutable, unzip-valid, and has identical uncompressed entry hashes to the fresh candidate package. Live home/privacy/terms and assets match the candidate build; outer ZIP bytes may differ due to regenerated timestamp metadata only.
 
-Deployed with `/opt/fleet/lib/deploy-static.sh` on 2026-08-28 as Static Web
-Apps deployment `753d9368-194d-40a2-9b23-94b2d5b664ea`; the custom domain is
-live at <https://remote-web-task-recipes.sociobot.in>.
+## Known follow-up
 
-- The live downloadable ZIP returned **200**, `application/zip`, immutable
-  cache control, and 131,630 bytes. `unzip -t` passed and its SHA-256 exactly
-  matched the built artifact:
-  `e008288488a218481b339285e04b6796fc84803239f8fd3da35701b072b2e3fc`.
-- Root, ZIP, and `sw.js` responses carried HSTS, CSP, nosniff,
-  Referrer-Policy, Permissions-Policy, and `X-Frame-Options: DENY`; `sw.js`
-  is `no-cache` and the ZIP is immutable.
-- Live Chromium checks on home/privacy/terms found one h1/main, `lang=en`,
-  complete alt text, zero serious/critical Axe 4.11.4 findings, no console or
-  page errors, and no outbound origin beyond the product. At 390×844 there was
-  no horizontal overflow. The service worker controlled a reload and the home
-  page reloaded offline with the expected title.
-- Lighthouse mobile: Performance **99**, Accessibility **100**, Best
-  Practices **100**, SEO **100**; FCP 1.1 s, LCP 1.4 s, CLS 0, TBT 100 ms.
+- P3 only: `npm ci` reports 10 development-toolchain advisories; production audit is clean. No product-code changes were made in this verification.
+- The extension remains honestly all-free because no Sociobot billing product is registered. Do not add a checkout until the factory registers it and a complete return-license flow can be tested.
 
-## Privacy, billing, and release notes
-
-- The repair preserves local-only notebook storage, local screenshot/OCR
-  handling, encrypted backup, no telemetry, no remote font/script, and no
-  change to the extension/site artifact class or static deployment layout.
-- The verified one-time billing product is still not registered: on 2026-08-28
-  `GET https://api.sociobot.in/api/v1/products/remote-web-task-recipes/checkout`
-  returned **404**. Product registration is factory billing infrastructure and
-  is explicitly outside this repository’s authority. The extension therefore
-  remains honestly all-free, with no dead checkout, account, license storage,
-  or paid accessibility gate. Do not add a checkout until the factory registers
-  the product and can exercise a real checkout/return-license flow.
-
-## Deploy
+## Deploy build
 
 ```bash
 npm run build:site
-/opt/fleet/lib/deploy-static.sh remote-web-task-recipes dist/site
 ```
 
-`build:site` is intentionally the deploy build: it creates the extension ZIP
-inside `dist/site/downloads/` before static deployment.
+This produces `dist/site/`, including `downloads/remote-web-task-recipes.zip`, for factory deployment.
