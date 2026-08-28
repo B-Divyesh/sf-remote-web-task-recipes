@@ -4,18 +4,30 @@ import axe from 'axe-core';
 const demoKey = 'demo:remote-web-task-recipes';
 
 test('@claim:demo-workflow shows the named sample and a guide that never operates it', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/demo/');
   await expect(page.getByRole('heading', { name: 'Find the payroll submit control again.' })).toBeVisible();
   await expect(page.locator('#landmark-list li')).toHaveCount(3);
   await expect(page.getByText('Northstar Payroll', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Step 1 of 3')).toBeVisible();
+  await expect(page.locator('#guide-count')).toHaveText('Step 1 of 3');
   await expect(page.getByRole('button', { name: 'Previous step' })).toBeVisible();
+
+  for (const selector of ['#glance-landmark-row', '#glance-control', '#glance-guide-step']) {
+    const box = await page.locator(selector).boundingBox();
+    expect(box, `${selector} should have a rendered box`).not.toBeNull();
+    expect(box!.y).toBeLessThan(844);
+    expect(box!.y + box!.height).toBeGreaterThan(0);
+  }
+  await expect(page.locator('#glance-landmark-row')).toContainText('Review exceptions');
+  await expect(page.locator('#glance-control')).toContainText('Review exceptions');
+  await expect(page.locator('#glance-guide-step')).toContainText('Choose Review exceptions');
 
   await page.locator('#submit-button').evaluate((target) => {
     target.addEventListener('click', () => { document.body.dataset.sampleClicks = '1'; });
   });
   await page.getByRole('button', { name: 'Next step' }).click();
-  await expect(page.getByText('Step 2 of 3')).toBeVisible();
+  await expect(page.locator('#guide-count')).toHaveText('Step 2 of 3');
+  await expect(page.locator('#glance-guide-step')).toContainText('Choose Submit timesheet');
   await page.getByRole('button', { name: 'Speak step' }).click();
   await expect(page.locator('body')).toHaveAttribute('data-spoken', 'true');
   await expect(page.locator('body')).not.toHaveAttribute('data-sample-clicks', '1');

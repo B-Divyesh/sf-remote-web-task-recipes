@@ -2,7 +2,9 @@
 
 Open `/demo/` or `/?demo=1` to enter the sample notebook. It contains the
 fictional Northstar Payroll website, three named landmarks, and three steps for
-submitting an August timesheet. No extension install or account is needed.
+submitting an August timesheet. At 390 px, the first screen includes a compact
+live view of landmark 1, its pinned Northstar control, and the current task
+step. No extension install or account is needed.
 
 The persistent banner says **Demo — sample data, nothing is saved**. **Reset
 demo** restores the sample; **Start for real** removes the demo state and takes

@@ -1,10 +1,10 @@
 [
   {
     "id": "demo-workflow",
-    "claim": "The one-click demo shows Northstar Payroll, three landmarks, spoken task steps, and a guide that does not operate the sample app.",
+    "claim": "The one-click demo shows Northstar Payroll, a landmark, a pinned sample control, and the current task step in the first phone screen; its guide does not operate the sample app.",
     "where": "Landing first-screen action, demo, README",
     "test": "npm run test:claims -- --grep @claim:demo-workflow",
-    "sandbox": "Fresh browser context at /demo/; advance and speak a task step while a click sentinel on the sample app stays unchanged."
+    "sandbox": "Fresh 390 × 844 browser context at /demo/; assert the landmark, pinned control, and current task step intersect the first viewport, then advance and speak while a click sentinel stays unchanged."
   },
   {
     "id": "demo-isolation",
