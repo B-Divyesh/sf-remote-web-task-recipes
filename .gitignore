@@ -5,5 +5,7 @@ dist/
 .factory/evidence/
 .env
 *.log
+test-results/
+playwright-report/
 graphify-out/
 .DS_Store

@@ -30,4 +30,11 @@ describe('static release contract', () => {
     expect(editor).not.toMatch(/products\/remote-web-task-recipes\/checkout/);
     expect(home).toContain('/downloads/remote-web-task-recipes.zip');
   });
+
+  it('keeps every editor overlay semantic and restores focus on close', async () => {
+    const editor = await readFile(resolve(root, 'entrypoints/options/main.ts'), 'utf8');
+    expect(editor).toContain("dialog.setAttribute('role', 'dialog')");
+    expect(editor).toContain("dialog.setAttribute('aria-modal', 'true')");
+    expect(editor).toContain('if (trigger?.isConnected) trigger.focus();');
+  });
 });

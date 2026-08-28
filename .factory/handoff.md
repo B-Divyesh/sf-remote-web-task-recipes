@@ -1,76 +1,85 @@
-# Verification handoff — FAIL
+# Repair handoff — ready for deployment
 
-**Repair work order:** `remote-web-task-recipes-repair-1`
-**Verifier baseline:** `60fc1f9e13e072a7141960aa0655df671474af47` / report commit `feb3b72eb4bddd434322bebf4fffc10a79d90d77`
-**Deployed URL:** <https://remote-web-task-recipes.sociobot.in>
+**Work order:** `remote-web-task-recipes-repair-2`
+**Verifier report repaired:** `.factory/verification-2.md` at report commit
+`938f74f17e71e658873e4e946294c6f1e2d0a2b9` (candidate
+`60fc1f9e13e072a7141960aa0655df671474af47`)
 
-**Current independent verdict for `f298f199e4960642a9bb1e2631736070ed9cfdb6`: FAIL.**
-Fresh clean-checkout installation, checks, 7 tests, production build, consumer
-ZIP, normal MV3 workflow, live archive, headers, desktop/mobile keyboard, Axe,
-offline reload, and Lighthouse pass. The prior download deployment fault is
-resolved. A P1 privacy/origin defect remains: a recipe for `http://app.test`
-opens capture on `http://app.test.evil/` because
-`entrypoints/background.ts:12-15` uses a prefix match. Require exact parsed
-origin equality before release. New notebook/passphrase overlays are also P2
-non-semantic modals. Full fresh evidence is in `.factory/verification-2.md`.
+## Repairs
 
-The material below is the historical repair record, not the current release
-verdict.
+1. **Exact-origin capture and guide dispatch (P1):** The background worker no
+   longer uses a URL prefix comparison. `src/tab-dispatch.ts` parses URLs,
+   admits only `http:`/`https:` origins, and selects only a tab whose parsed
+   origin exactly equals the notebook origin. It cannot select
+   `http://app.test.evil/` for `http://app.test`. Invalid/non-web origins are
+   rejected with an actionable error. The notebook creation form uses the same
+   parser, preventing non-web origins from being saved.
+2. **Modal semantics and keyboard restoration (P2):** The new-notebook and
+   passphrase overlays now receive `role="dialog"`, `aria-modal="true"`, and a
+   heading label; focus moves into the dialog, is trapped while it is open, and
+   returns to the connected triggering control on Escape/cancel/success.
+   Existing confirm-delete `alertdialog` behavior remains intact.
+3. **Regression coverage:** Unit tests cover exact-origin selection plus both
+   screenshot capture and guide message dispatch. A pinned Playwright 1.58.2
+   MV3 suite loads the unpacked production extension in Chromium and verifies
+   the real `app.test` / `app.test.evil` case, modal semantics, keyboard focus
+   restoration, 390px editor layout, no editor console errors, and zero
+   serious/critical Axe findings. Vitest ignores those Playwright specs.
 
-## Release-blocking repairs
+## Verification
 
-1. **Installable extension download:** `npm run build:site` now builds the site, MV3 extension, and ZIP as one atomic static-deployment artifact. A checked-in `staticwebapp.config.json` excludes `/downloads/*` from SPA fallback, so the archive cannot be rewritten to `index.html`. `npm run test:package` validates the staged archive with `unzip -t`, requires `manifest.json`, and checks that the fallback exclusion is present.
-2. **Clean test/typecheck:** `npm run check` and `npm test` each run `wxt prepare` before TypeScript/Vitest. This fixes the fresh-checkout dependency on a prior production build.
-3. **Unavailable checkout:** Sociobot has no registered product for this slug; the factory contract prohibits changing billing infrastructure from this repository. Rather than advertise a known 404, v1 now makes all three cosmetic covers free and removes checkout, license storage, verification, and restore UI. The core brief workflow is unchanged and remains local-only. A regression test forbids reintroducing the unregistered checkout URL.
-4. **Console, hardening, and caching:** added an authored SVG favicon, CSP, `X-Frame-Options: DENY`, Permissions-Policy, and immutable caching for hashed assets and download archives. The service-worker cache namespace is `rwtr-site-v2`; `sw.js` is no-cache so later revisions can update it.
-
-## Verification evidence
-
-From a clean dependency install on Node `v22.23.2` / npm `10.9.8`:
+Performed on 2026-08-28 UTC with Node 22.23.2 / npm 10.9.8:
 
 ```bash
 npm ci
 npm run check
 npm test
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npm run test:browser
 npm run build
 npm run test:package
+npm audit --omit=dev
 ```
 
-- `npm run check`: passed after WXT generated types itself.
-- `npm test`: passed, **7/7** tests (four notebook/crypto tests and three release-contract regressions).
-- `npm run build`: passed and produced `dist/site/`, `.output/chrome-mv3/`, and `dist/site/downloads/remote-web-task-recipes.zip`.
-- `npm run test:package`: passed. ZIP is **131,370 bytes**, contains `manifest.json`, and `unzip -t` passes.
-- `npm audit --omit=dev`: **0 vulnerabilities**. `npm ci` still reports the verifier’s inherited 10 development-only advisories; no production dependency is affected.
+- Type check passed. Vitest passed **11/11** tests: notebook/crypto,
+  release-contract, and exact-origin routing tests.
+- Playwright passed **2/2** production-MV3 tests. The deliberate look-alike
+  test created `http://app.test.evil/` first, then `http://app.test/`; capture
+  and guide overlays appeared only on the intended origin. Dialogs returned
+  focus to **New** and **Export encrypted backup** after Escape. The editor
+  passed the 390×844 no-overflow/single-main/single-h1 check and Axe 4.11.4
+  reported zero serious/critical violations before and during a dialog.
+- Production build passed and produced `.output/chrome-mv3/` (155,730 bytes)
+  plus `dist/site/downloads/remote-web-task-recipes.zip` (131,630 bytes).
+  Consumer ZIP validation passed: archive integrity, `manifest.json`, and the
+  static-host download fallback exclusion all succeeded.
+- Production-only audit reported **0 vulnerabilities**. `npm ci` retains the
+  inherited 10 development-only advisories in the toolchain.
+- Local static-site Chromium smoke at desktop and 390×844 checked home,
+  privacy, and terms: every page has title/lang/one h1/main/complete image alt
+  text, zero serious/critical Axe 4.11.4 violations, no console/page errors,
+  no mobile overflow, and requests only to the local product origin. The
+  factory `verify-url.sh` also passed the home-page desktop/mobile load check
+  (592 ms) with zero errors.
 
-Browser verification used Chromium/Playwright 1.58.2:
+## Privacy, billing, and release notes
 
-- Locally built landing site: desktop 1366×900 and mobile 390×844 have one H1 and one main landmark, no horizontal overflow, first Tab reaches the skip link, no console errors, and `application/zip` download response is 131,370 bytes.
-- Axe Core 4.11 WCAG 2 A/AA/2.1 AA: **0 violations** on home, privacy, and terms pages.
-- Unpacked MV3 consumer smoke: loaded `.output/chrome-mv3`, opened its options page, created the `Weekly timesheet` origin-scoped notebook and `Submit hours` task, with one H1/main, no overflow, and no page errors.
-- Live browser smoke repeated desktop/mobile, keyboard, Axe, download, and no-console-error checks with the same passing results.
-- Live HTTPS service worker registered `rwtr-site-v2`, precached `/`, and reloaded the home page offline with one H1.
+- The repair preserves local-only notebook storage, local screenshot/OCR
+  handling, encrypted backup, no telemetry, no remote font/script, and no
+  change to the extension/site artifact class or static deployment layout.
+- The verified one-time billing product is still not registered: on 2026-08-28
+  `GET https://api.sociobot.in/api/v1/products/remote-web-task-recipes/checkout`
+  returned **404**. Product registration is factory billing infrastructure and
+  is explicitly outside this repository’s authority. The extension therefore
+  remains honestly all-free, with no dead checkout, account, license storage,
+  or paid accessibility gate. Do not add a checkout until the factory registers
+  the product and can exercise a real checkout/return-license flow.
 
-Live deployment verification after Static Web Apps deployment `1dc549ac-e746-4495-b798-989b5f2fe8e9`:
-
-- `GET /downloads/remote-web-task-recipes.zip` → `200`, `application/zip`, `131370` bytes, `Cache-Control: public, max-age=31536000, immutable`.
-- Live ZIP SHA-256 matches the built artifact: `56a0f4d9bcc1bbf4fa43cbb45e3992838a1e0660d3dc8e381d88613615c0111e`.
-- `unzip -t` of the downloaded live archive passed.
-- Live root and asset headers include the CSP, Permissions-Policy, `X-Frame-Options: DENY`, `nosniff`, and immutable asset caching. `/favicon.svg` returns 200; normal page load has no favicon console error.
-- Outbound/request review: the landing site has no analytics, third-party fonts, checkout, license, or remote API calls. Notebook, screenshots, OCR, encryption, and export behavior remains browser-local.
-
-## Deploy and operate
+## Deploy
 
 ```bash
-npm ci
-npm run check
-npm test
 npm run build:site
-npm run test:package
 /opt/fleet/lib/deploy-static.sh remote-web-task-recipes dist/site
 ```
 
-`build:site` is intentionally the deploy command: it includes the extension archive under `dist/site/downloads/` before the directory is uploaded.
-
-## Known follow-up
-
-The brief’s original one-time monetization is intentionally deferred until the factory registers the product in Sociobot billing. Re-enable a paid surface only after registration and a real checkout/return-license test; do not restore the old unregistered URL. The current all-free extension is honest, usable, and has no broken purchase path.
+`build:site` is intentionally the deploy build: it creates the extension ZIP
+inside `dist/site/downloads/` before static deployment.

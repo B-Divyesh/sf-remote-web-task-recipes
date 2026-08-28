@@ -2,6 +2,7 @@ import '../../src/notebook.css';
 import { browser } from 'wxt/browser';
 import { decryptNotebook, encryptNotebook } from '../../src/crypto';
 import { createRecipe, loadState, saveState, updateRecipe } from '../../src/storage';
+import { httpOrigin } from '../../src/tab-dispatch';
 import type { NotebookState, TaskRecipe } from '../../src/types';
 
 const list = document.querySelector<HTMLUListElement>('#recipe-list')!;
@@ -12,6 +13,7 @@ let state: NotebookState;
 let selectedId = '';
 let activeTab: 'landmarks' | 'tasks' = 'landmarks';
 let undoState: { recipeId: string; recipe: TaskRecipe } | null = null;
+let modalTrigger: HTMLElement | null = null;
 
 const escapeHtml = (value: string) => { const span = document.createElement('span'); span.textContent = value; return span.innerHTML; };
 const announce = (message: string, error = false) => { globalStatus.textContent = message; globalStatus.dataset.kind = error ? 'error' : 'ok'; };
@@ -86,8 +88,8 @@ function showUndo(message: string) { announce(message); const old = document.que
 function openNewRecipe() {
   showModal(`<form class="modal sheet" id="new-form"><p class="eyebrow">New field notebook</p><h2>Name the browser app</h2><div class="field"><label for="recipe-name">Notebook name</label><input id="recipe-name" name="name" required maxlength="80" autofocus></div><div class="field"><label for="recipe-origin">App address</label><input id="recipe-origin" name="origin" type="url" required placeholder="https://work.example.com" aria-describedby="origin-hint"><p class="hint" id="origin-hint">Only the site origin is stored, never page content.</p></div><div class="actions"><button type="submit">Create notebook</button><button type="button" class="secondary" data-close>Cancel</button></div></form>`);
   const form = modal.querySelector<HTMLFormElement>('#new-form')!;
-  void browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => { if (tab?.url?.startsWith('http')) (form.elements.namedItem('origin') as HTMLInputElement).value = new URL(tab.url).origin; });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); let origin: string; try { origin = new URL(String(data.get('origin'))).origin; } catch { announce('Enter a complete http or https address.', true); return; } const recipe = createRecipe(String(data.get('name')).trim(), origin); state.recipes.push(recipe); await saveState(state); selectedId = recipe.id; closeModal(); announce('Notebook created. Add its first landmark.'); });
+  void browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => { const origin = httpOrigin(tab?.url); if (origin) (form.elements.namedItem('origin') as HTMLInputElement).value = origin; });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const origin = httpOrigin(String(data.get('origin'))); if (!origin) { announce('Enter a complete http or https address.', true); return; } const recipe = createRecipe(String(data.get('name')).trim(), origin); state.recipes.push(recipe); await saveState(state); selectedId = recipe.id; closeModal(); announce('Notebook created. Add its first landmark.'); });
 }
 
 function confirmDeleteRecipe(recipe: TaskRecipe) { showModal(`<section class="modal sheet" role="alertdialog" aria-modal="true" aria-labelledby="delete-title"><h2 id="delete-title">Delete “${escapeHtml(recipe.name)}”?</h2><p>This removes ${recipe.landmarks.length} landmarks and ${recipe.tasks.length} tasks from this device. Export a backup first if you need them.</p><div class="actions"><button class="danger" id="confirm-delete" type="button">Delete notebook</button><button class="secondary" type="button" data-close>Keep notebook</button></div></section>`); modal.querySelector('#confirm-delete')?.addEventListener('click', async () => { state.recipes = state.recipes.filter((item) => item.id !== recipe.id); await saveState(state); selectedId = state.recipes[0]?.id ?? ''; closeModal(); announce('Notebook deleted.'); }); }
@@ -101,8 +103,28 @@ async function openDataTools() {
 
 function passphraseDialog(title: string, action: string, work: (passphrase: string) => Promise<void>) { showModal(`<form class="modal sheet" id="pass-form"><h2>${title}</h2><div class="field"><label for="passphrase">Passphrase</label><input id="passphrase" name="passphrase" type="password" required minlength="10" autocomplete="off" aria-describedby="pass-hint"><p class="hint" id="pass-hint">At least 10 characters. It cannot be recovered.</p></div><p class="status" id="pass-status" role="status"></p><div class="actions"><button type="submit">${action}</button><button class="secondary" type="button" data-close>Cancel</button></div></form>`); const form = modal.querySelector<HTMLFormElement>('#pass-form')!; form.addEventListener('submit', async (event) => { event.preventDefault(); const status = modal.querySelector<HTMLElement>('#pass-status')!; try { status.textContent = 'Working…'; await work(String(new FormData(form).get('passphrase'))); closeModal(); } catch (error) { status.textContent = error instanceof Error ? error.message : 'That did not work.'; status.dataset.kind = 'error'; } }); }
 
-function showModal(html: string) { modal.innerHTML = html; modal.hidden = false; modal.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', closeModal)); modal.addEventListener('keydown', modalKeys); modal.querySelector<HTMLElement>('input,button')?.focus(); }
-function closeModal() { modal.hidden = true; modal.innerHTML = ''; modal.removeEventListener('keydown', modalKeys); }
+function showModal(html: string) {
+  modalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  modal.innerHTML = html;
+  const dialog = modal.querySelector<HTMLElement>('.modal')!;
+  if (!dialog.hasAttribute('role')) dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  const heading = dialog.querySelector<HTMLElement>('h2');
+  if (heading && !heading.id) heading.id = 'modal-title';
+  if (heading && !dialog.hasAttribute('aria-labelledby')) dialog.setAttribute('aria-labelledby', heading.id);
+  modal.hidden = false;
+  modal.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', closeModal));
+  modal.addEventListener('keydown', modalKeys);
+  dialog.querySelector<HTMLElement>('input,button,textarea,[href]')?.focus();
+}
+function closeModal() {
+  modal.hidden = true;
+  modal.innerHTML = '';
+  modal.removeEventListener('keydown', modalKeys);
+  const trigger = modalTrigger;
+  modalTrigger = null;
+  if (trigger?.isConnected) trigger.focus();
+}
 function modalKeys(event: KeyboardEvent) { if (event.key === 'Escape') closeModal(); if (event.key !== 'Tab') return; const focusables = [...modal.querySelectorAll<HTMLElement>('button,input,textarea,a[href]')].filter((el) => !el.hasAttribute('disabled')); if (!focusables.length) return; const first = focusables[0], last = focusables.at(-1)!; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); } }
 
 document.querySelector('#new-recipe')?.addEventListener('click', openNewRecipe);

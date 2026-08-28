@@ -62,6 +62,7 @@ npm run dev            # WXT extension development
 npm run dev:site       # landing site development
 npm run check          # strict TypeScript; prepares WXT types itself
 npm test               # Vitest; prepares WXT types itself
+npm run test:browser   # MV3 Chromium regression, keyboard, dialog, Axe checks
 npm run build          # extension + site + downloadable ZIP
 npm run test:package   # inspect the staged ZIP as a consumer would
 ```
