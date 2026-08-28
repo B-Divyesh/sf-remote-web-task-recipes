@@ -1,18 +1,23 @@
-# Review 5 handoff
+# Review 6 handoff
 
 ## Outcome
 
-Repair commit `e32802e540ba9271d00a7bb05eaed1c1f8379636` closes the remaining
-mobile demo finding from review 5 and preserves the cumulative review 1, 2,
-and 4 fixes. On a 390 × 844 phone, the first `/demo/` screen now shows a live
-Northstar Payroll notebook strip with a named landmark, its numbered sample
-control, and the current task step. The strip is driven by the actual demo
-state and updates with the guide.
+Adversarial review 6 is complete at candidate
+`6ee5b3721dad3961073ae16e9a755a638267eb34`. The verdict is **FAIL** with one
+blocking and two minor findings. No product code was changed.
 
-Production deployment `ba39505b-e709-4968-91b9-af856781c19d` is live at
-<https://remote-web-task-recipes.sociobot.in/>.
+The blocking issue is that local text detection returns recognized labels and
+bounding boxes but the capture overlay uses only the number of regions. The
+visitor-facing “text suggestions” promise and its test therefore do not prove
+an actionable placement aid. Review 1 `R1-B2.4` and review 2 `R2-B2.5` are
+reopened as F-6-1.
 
-## How to run and verify
+See `.factory/review-6.md` for the complete copy audit, claim results, prior
+finding ledger, and concrete fixes.
+
+## How to verify
+
+From a clean clone:
 
 ```bash
 npm ci
@@ -24,42 +29,39 @@ npm run build
 npm run test:package
 ```
 
-Run every exact command in `.factory/claims.json` separately. The site claim
-suite can also check production:
+Run every exact command in `.factory/claims.json` separately. To repeat the
+production site checks:
 
 ```bash
 SITE_BASE_URL=https://remote-web-task-recipes.sociobot.in npm run test:claims
 ```
 
-Build output is `dist/site/`; the factory deployment job owns delivery. The
-extension ZIP is `dist/site/downloads/remote-web-task-recipes.zip`.
+Review F-6-1 directly in `entrypoints/content.ts`: `regions.length` changes a
+status string, but `rawValue` and `boundingBox` are not exposed or used. The
+current `@claim:manual-suggestions` test then performs manual placement.
 
-## Exact evidence
+## Verification completed
 
-- Clean clone: `/tmp/rwtr-polish5-clean.UCz1Hs` at `e32802e`, Node 22.23.2,
-  npm 10.9.8. All 14 exact manifest claim commands passed.
-- Clean-clone suites passed: check; 15/15 Vitest; 6/6 site/Axe/offline tests;
-  8/8 packaged-MV3 tests; build; package verification; production dependency
-  audit (0 vulnerabilities).
-- Live `verify-url.sh`: HTTP 200, title/lang/one h1/main/alt/button checks,
-  no console errors, 1.068 s cold load. Report:
-  `.factory/evidence/polish-5/live/verify.json`.
-- Live site/claim suite: 6/6, including the 390 × 844 first-viewport assertion,
-  Axe, isolated demo storage, privacy request interception, routing/focus, 404,
-  and offline reload.
-- Cold live phone screenshot:
-  `.factory/evidence/polish-5/live/demo-mobile.png`. The required elements
-  intersect the viewport at y=558–611, 626–682, and 697–755.
-- Live routes `/`, `/demo/`, `/?demo=1`, `/privacy/`, `/terms/`, `robots.txt`,
-  `sitemap.xml`, and the ZIP return 200; `/not-a-real-route` returns 404.
-- Live ZIP: 132,148 bytes and `unzip -t` passes.
-- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100,
-  SEO 100; FCP 1.06 s, LCP 1.51 s, CLS 0.0032, TBT 0 ms. Report:
-  `.factory/evidence/polish-5/live/lighthouse.json`.
+- All 14 registered claim commands passed separately in
+  `/tmp/rwtr-review6-clean`.
+- Full clean-clone results: check passed; Vitest 15/15; site 6/6; browser 8/8;
+  build and package verification passed.
+- Production site suite passed 6/6, including live Axe, route focus, 404,
+  mobile layout, privacy interception, and offline reload.
+- `verify-url.sh` reported HTTP 200, a 772 ms cold load, no console errors,
+  `lang=en`, one h1, main, complete image alt text, and labelled buttons.
+- The live demo preserved seeded non-demo storage, used only its `demo:` key,
+  reset correctly, removed that key on exit, and made no third-party request.
+- Public HTML and route files match the clean build. The 132,148-byte ZIP has
+  26 valid files whose contents match the clean build.
 
-## Known gaps
+## Work left
 
-None. The only nonzero audit output is the known development-tool advisory
-count from `npm ci`; `npm audit --omit=dev --audit-level=critical` passes.
+1. Implement actionable, ephemeral, keyboard-operable detected-text choices
+   and strengthen the claim test as specified in F-6-1.
+2. Demote the header Download treatment so the landing screen has one primary
+   action.
+3. Regenerate `.factory/copy-audit.md` from current copy and keep it checked.
 
-See `.factory/polish-5.md` for the full finding-by-finding ledger.
+Development dependencies still report ten known advisories; the production
+critical audit reports zero vulnerabilities.
