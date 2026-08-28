@@ -1,12 +1,13 @@
 {
   "name": "remote-web-task-recipes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
     "dev:site": "vite --config site/vite.config.ts",
     "prepare:wxt": "wxt prepare",
+    "prebuild:site:assets": "npm run prepare:wxt",
     "build:extension": "wxt build",
     "build:site:assets": "vite build --config site/vite.config.ts",
     "build:site": "npm run build:site:assets && npm run build:extension && npm run package:extension",
@@ -14,7 +15,7 @@
     "build": "npm run build:site",
     "test": "npm run prepare:wxt && vitest run",
     "test:browser": "npm run build:extension && playwright test",
-    "test:site": "npm run build:site:assets && playwright test -c playwright.site.config.ts",
+    "test:site": "npm run build:site && playwright test -c playwright.site.config.ts",
     "test:claims": "npm run build:site:assets && playwright test -c playwright.site.config.ts",
     "check": "npm run prepare:wxt && tsc --noEmit",
     "test:package": "node scripts/verify-package.mjs"

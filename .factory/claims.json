@@ -1,11 +1,86 @@
 [
-  {"id":"demo-workflow","claim":"The demo shows a named website, three landmarks, and one task step at a time.","where":"Demo and landing action","test":"npm run test:claims -- --grep @claim:demo-workflow","sandbox":"Fresh browser context at /demo/; advance the guide and assert the sample app was not clicked."},
-  {"id":"demo-isolation","claim":"Demo sample data is isolated and can be reset or discarded.","where":"Demo banner","test":"npm run test:claims -- --grep @claim:demo-isolation","sandbox":"Fresh browser context at /?demo=1; inspect localStorage, reset, and leave demo."},
-  {"id":"privacy-network","claim":"The demo makes no third-party network requests.","where":"Landing privacy list and demo","test":"npm run test:claims -- --grep @claim:privacy-network","sandbox":"Intercept all requests while loading, advancing, and resetting the demo."},
-  {"id":"keyboard-placement","claim":"Landmark placement supports keyboard instructions and cancellation.","where":"Landing how-it-works and demo","test":"npm run test:claims -- --grep @claim:keyboard-placement","sandbox":"Fresh demo; activate placement with Enter and cancel with Escape."},
-  {"id":"manual-placement","claim":"Manual landmark placement remains available without text suggestions.","where":"Landing privacy list","test":"npm run test:claims -- --grep @claim:manual-placement","sandbox":"Fresh demo; activate the manual placement sample and assert its outcome."},
-  {"id":"free-workflow","claim":"The sample workflow needs no account or payment.","where":"Landing first screen and free section","test":"npm run test:claims -- --grep @claim:free-workflow","sandbox":"Fresh demo; advance a task step and assert no login, password, email, or checkout control exists."},
-  {"id":"origin-scoped","claim":"A notebook is scoped to one website origin.","where":"README and extension editor","test":"npm test -- -t @claim:origin-scoped","sandbox":"Fresh test state; match a notebook to its website and reject a second origin."},
-  {"id":"encrypted-backup","claim":"A backup is encrypted and requires the correct passphrase.","where":"Landing privacy list and README","test":"npm test -- -t @claim:encrypted-backup","sandbox":"Fresh test state; export a notebook, confirm its private text is absent, then decrypt it only with the correct passphrase."},
-  {"id":"capture-and-origin-scope","claim":"Capture and guide actions target only the exact website origin and can be cancelled.","where":"README and extension workflow","test":"npm run test:browser -- --grep @claim:capture-and-origin-scope","sandbox":"Fresh MV3 profile with two look-alike origins; start capture, cancel it, then assert capture and guide appear only on the exact origin."}
+  {
+    "id": "demo-workflow",
+    "claim": "The one-click demo shows Northstar Payroll, three landmarks, spoken task steps, and a guide that does not operate the sample app.",
+    "where": "Landing first-screen action, demo, README",
+    "test": "npm run test:claims -- --grep @claim:demo-workflow",
+    "sandbox": "Fresh browser context at /demo/; advance and speak a task step while a click sentinel on the sample app stays unchanged."
+  },
+  {
+    "id": "demo-isolation",
+    "claim": "Demo changes use only the demo namespace, reset to the bundled sample, and are discarded by Start for real.",
+    "where": "Demo banner, demo documentation, README",
+    "test": "npm run test:claims -- --grep @claim:demo-isolation",
+    "sandbox": "Fresh browser context through ?demo=1; inspect all localStorage keys, mutate, reset, exit, and inspect storage again."
+  },
+  {
+    "id": "demo-positioning",
+    "claim": "Sample landmark placement works by pointer or keyboard; Arrow moves 1%, Shift+Arrow moves 5%, Enter saves, and Escape cancels.",
+    "where": "Landing how-it-works, demo placement instructions",
+    "test": "npm run test:claims -- --grep @claim:demo-positioning",
+    "sandbox": "Fresh /demo/ state; measure stored coordinates after keyboard and pointer placement, then prove cancellation leaves them unchanged."
+  },
+  {
+    "id": "site-private",
+    "claim": "The public site and complete sample flow make no third-party requests.",
+    "where": "Landing privacy facts, privacy policy",
+    "test": "npm run test:claims -- --grep @claim:site-private",
+    "sandbox": "Intercept every request across demo placement, guide advance, reset, and Start for real; allow only the served site origin."
+  },
+  {
+    "id": "package-ready",
+    "claim": "The built Chrome extension opens its notebook editor and accessible dialogs from a fresh profile.",
+    "where": "Landing download section, README installation steps",
+    "test": "npm run test:browser -- --grep @claim:package-ready",
+    "sandbox": "Build the production MV3 directory, load it alone in a fresh Chromium profile, open the editor, and exercise its dialogs."
+  },
+  {
+    "id": "capture-and-origin-scope",
+    "claim": "Capture and guide actions run only on the notebook's exact website, not a look-alike address.",
+    "where": "README privacy section, extension behavior",
+    "test": "npm run test:browser -- --grep @claim:capture-and-origin-scope",
+    "sandbox": "Fresh MV3 profile with app.test and app.test.evil; assert capture and guide appear only on the exact website."
+  },
+  {
+    "id": "local-notebooks",
+    "claim": "Notebook data uses one extension-storage key, keeps only the website address, and can be deleted in the editor.",
+    "where": "Landing, editor, privacy policy, README",
+    "test": "npm run test:browser -- --grep @claim:local-notebooks",
+    "sandbox": "Fresh MV3 profile; create a notebook from a path URL, inspect all extension storage, then delete it and inspect storage again."
+  },
+  {
+    "id": "temporary-capture",
+    "claim": "A screenshot exists only while landmark placement is open and is neither stored nor sent to a remote server.",
+    "where": "Landing, capture overlay, privacy policy, README",
+    "test": "npm run test:browser -- --grep @claim:temporary-capture",
+    "sandbox": "Fresh MV3 profile; inspect extension state during and after capture, cancel, and intercept all HTTP requests."
+  },
+  {
+    "id": "manual-suggestions",
+    "claim": "Manual placement works with and without browser text suggestions, using pointer or keyboard controls.",
+    "where": "Landing, capture overlay, privacy policy, README",
+    "test": "npm run test:browser -- --grep @claim:manual-suggestions",
+    "sandbox": "Fresh MV3 profile with supported and unsupported TextDetector fixtures; save landmarks in both paths and cancel a third."
+  },
+  {
+    "id": "user-control",
+    "claim": "The guide shows one task step at a time without reading passwords or page text and without clicking the website.",
+    "where": "Landing, extension, terms, README",
+    "test": "npm run test:browser -- --grep @claim:user-control",
+    "sandbox": "Fresh MV3 profile with password, page-text, and click sentinels; advance the guide and inspect the page and extension storage."
+  },
+  {
+    "id": "free-complete",
+    "claim": "Landmarks, task guides, speech, appearance choices, and encrypted backup work without an account, checkout, or payment request.",
+    "where": "Landing free section, editor, terms, README",
+    "test": "npm run test:browser -- --grep @claim:free-complete",
+    "sandbox": "Fresh MV3 profile; complete every listed workflow, download a backup, inspect UI, and intercept every HTTP request."
+  },
+  {
+    "id": "encrypted-backup",
+    "claim": "Backups hide notebook text and open only with the passphrase used to create them.",
+    "where": "Landing, editor, privacy policy, README",
+    "test": "npm test -- -t @claim:encrypted-backup",
+    "sandbox": "Fresh state; encrypt a named notebook, inspect the envelope, decrypt correctly, and reject a different passphrase."
+  }
 ]

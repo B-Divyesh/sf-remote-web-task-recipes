@@ -6,7 +6,7 @@ export default defineConfig({
   manifest: {
     name: 'Remote Web Task Recipes',
     description: 'User-owned landmarks and spoken steps for inaccessible browser-delivered software.',
-    version: '1.0.0',
+    version: '1.0.1',
     permissions: ['activeTab', 'storage', 'scripting'],
     host_permissions: ['<all_urls>'],
     action: { default_title: 'Open task recipes' },

@@ -38,4 +38,44 @@ describe('static release contract', () => {
     expect(editor).toContain("dialog.setAttribute('aria-modal', 'true')");
     expect(editor).toContain('if (trigger?.isConnected) trigger.focus();');
   });
+
+  it('makes site builds self-sufficient in a clean clone', async () => {
+    const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+    expect(manifest.scripts['prebuild:site:assets']).toBe('npm run prepare:wxt');
+    expect(manifest.scripts['test:claims']).toContain('build:site:assets');
+    expect(manifest.scripts.build).toBe('npm run build:site');
+  });
+
+  it('lists every claim tag exactly once and no undeclared claim tags', async () => {
+    const claims = JSON.parse(await readFile(resolve(root, '.factory/claims.json'), 'utf8')) as Array<{ id: string; test: string }>;
+    const testSources = (await Promise.all([
+      'tests/core.test.ts',
+      'tests/browser/extension.spec.ts',
+      'tests/site/claims.spec.ts'
+    ].map((file) => readFile(resolve(root, file), 'utf8')))).join('\n');
+    const found = [...testSources.matchAll(/@claim:([a-z0-9-]+)/g)].map((match) => match[1]);
+    expect(new Set(found)).toEqual(new Set(claims.map((claim) => claim.id)));
+    for (const claim of claims) {
+      expect(found.filter((id) => id === claim.id)).toHaveLength(1);
+      expect(claim.test).toContain(`@claim:${claim.id}`);
+    }
+  });
+
+  it('ships full metadata and route-focus handling on every static page', async () => {
+    const pages = ['site/index.html', 'site/demo/index.html', 'site/privacy/index.html', 'site/terms/index.html', 'site/404.html'];
+    for (const file of pages) {
+      const html = await readFile(resolve(root, file), 'utf8');
+      expect(html).toMatch(/<html lang="en">/);
+      expect(html.match(/<h1\b/g)).toHaveLength(1);
+      expect(html).toMatch(/<main\b/);
+      expect(html).toMatch(/<meta name="description"/);
+      expect(html).toMatch(/<link rel="canonical"/);
+      expect(html).toMatch(/<meta property="og:title"/);
+      expect(html).toMatch(/<meta name="twitter:title"/);
+      expect(html).toMatch(/<link rel="apple-touch-icon"/);
+      expect(html).toContain('Built by Param Factory');
+      expect(html).toContain('/privacy/');
+      expect(html).toContain('/terms/');
+    }
+  });
 });

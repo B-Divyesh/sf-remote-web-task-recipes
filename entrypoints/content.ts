@@ -35,6 +35,11 @@ function mount(): { host: HTMLElement; root: ShadowRoot } {
   return { host, root };
 }
 
+function createId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return [...crypto.getRandomValues(new Uint32Array(4))].map((part) => part.toString(16).padStart(8, '0')).join('-');
+}
+
 async function detectText(dataUrl: string): Promise<TextRegion[]> {
   const TextDetector = (globalThis as unknown as { TextDetector?: TextDetectorConstructor }).TextDetector;
   if (!TextDetector) return [];
@@ -48,7 +53,9 @@ async function detectText(dataUrl: string): Promise<TextRegion[]> {
 }
 
 async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPTURE' }>) {
+  const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const { host, root } = mount();
+  host.dataset.mode = 'capture';
   root.innerHTML += `<div class="veil" role="dialog" aria-modal="true" aria-labelledby="rwtr-cap-title">
     <img class="shot" alt="Frozen screenshot of the current tab for landmark placement">
     <div class="aim" aria-hidden="true"></div>
@@ -64,27 +71,29 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
   shot.src = message.screenshot;
   let x = .5, y = .5;
   const paint = () => { aim.style.left = `${x * 100}%`; aim.style.top = `${y * 100}%`; };
-  paint();
+  const exposePosition = () => { host.dataset.x = x.toFixed(2); host.dataset.y = y.toFixed(2); };
+  paint(); exposePosition();
   const regions = await detectText(message.screenshot);
+  host.dataset.suggestion = regions.length ? 'available' : 'unavailable';
   status.textContent = regions.length
-    ? `Local OCR found ${regions.length} text regions. Pixels and text were not uploaded.`
-    : 'Visual placement is ready. Local OCR is not available in this browser; nothing was uploaded.';
+    ? `Your browser found ${regions.length} visible text areas. The screenshot and suggestions stayed on this device.`
+    : 'Manual placement is ready. This browser did not offer text suggestions.';
   const move = (event: PointerEvent) => {
     if ((event.target as HTMLElement).closest('.panel')) return;
     x = Math.min(1, Math.max(0, event.clientX / innerWidth));
     y = Math.min(1, Math.max(0, event.clientY / innerHeight));
-    paint();
+    paint(); exposePosition();
   };
   veil.addEventListener('pointermove', move);
   veil.addEventListener('click', (event) => {
     if (!(event.target as HTMLElement).closest('.panel')) void save();
   });
-  const close = () => host.remove();
+  const close = () => { shot.removeAttribute('src'); host.remove(); if (returnFocus?.isConnected) returnFocus.focus(); };
   const save = async () => {
     const state = await loadState();
     const recipe = state.recipes.find((item) => item.id === message.recipeId);
     if (!recipe) { status.textContent = 'That notebook was removed. Open the editor and try again.'; return; }
-    const landmark: Landmark = { id: crypto.randomUUID(), name: message.name, cue: message.cue, x, y, createdAt: Date.now() };
+    const landmark: Landmark = { id: createId(), name: message.name, cue: message.cue, x, y, createdAt: Date.now() };
     recipe.landmarks.push(landmark);
     recipe.updatedAt = Date.now();
     await saveState(state);
@@ -95,7 +104,7 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
   veil.addEventListener('keydown', (event) => {
     const key = event.key;
     if (key === 'Escape') { event.preventDefault(); close(); return; }
-    if (key === 'Enter' && event.target === veil) { event.preventDefault(); void save(); return; }
+    if (key === 'Enter' && !(event.target as HTMLElement).closest('button')) { event.preventDefault(); void save(); return; }
     if (!key.startsWith('Arrow')) return;
     event.preventDefault();
     const delta = event.shiftKey ? .05 : .01;
@@ -103,7 +112,17 @@ async function showCapture(message: Extract<ExtensionMessage, { type: 'SHOW_CAPT
     if (key === 'ArrowRight') x = Math.min(1, x + delta);
     if (key === 'ArrowUp') y = Math.max(0, y - delta);
     if (key === 'ArrowDown') y = Math.min(1, y + delta);
-    paint();
+    paint(); exposePosition();
+  });
+  root.addEventListener('keydown', (rawEvent) => {
+    const event = rawEvent as KeyboardEvent;
+    if (event.key !== 'Tab') return;
+    const controls = [...root.querySelectorAll<HTMLButtonElement>('button:not([disabled])')];
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls.at(-1)!;
+    if (event.shiftKey && (root.activeElement === first || root.activeElement === veil)) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && root.activeElement === last) { event.preventDefault(); first.focus(); }
   });
   veil.tabIndex = -1;
   veil.focus();
@@ -113,13 +132,16 @@ function showGuide(recipe: TaskRecipe, taskId: string) {
   const task = recipe.tasks.find((item) => item.id === taskId);
   if (!task || task.steps.length === 0) return;
   const { host, root } = mount();
+  host.dataset.mode = 'guide';
   let index = 0;
   const speak = (text: string) => {
     speechSynthesis.cancel();
     speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    host.dataset.spoken = 'true';
   };
   const render = () => {
     const step = task.steps[index];
+    host.dataset.step = String(index + 1);
     const landmark = recipe.landmarks.find((item) => item.id === step.landmarkId);
     root.querySelector('.guide')?.remove(); root.querySelector('.pin')?.remove();
     if (landmark) {
@@ -144,7 +166,7 @@ function showGuide(recipe: TaskRecipe, taskId: string) {
   };
   root.addEventListener('keydown', (rawEvent) => {
     const event = rawEvent as KeyboardEvent;
-    if (event.key === 'Escape') host.remove();
+    if (event.key === 'Escape') { speechSynthesis.cancel(); host.remove(); }
     if (event.key === 'ArrowRight' && index < task.steps.length - 1) { index++; render(); }
     if (event.key === 'ArrowLeft' && index > 0) { index--; render(); }
   });

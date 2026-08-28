@@ -6,5 +6,5 @@ export default defineConfig({
   fullyParallel: false,
   reporter: 'list',
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
-  webServer: { command: 'npx vite preview --config site/vite.config.ts --host 127.0.0.1', port: 4173, reuseExistingServer: false }
+  webServer: { command: 'node scripts/serve-site.mjs', port: 4173, reuseExistingServer: false }
 });

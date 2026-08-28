@@ -1,1 +1,1 @@
-Save landmarks and task steps for repeated work in hard-to-use browser software.
+Save landmarks and spoken task steps for repeated work in hard-to-use browser software.

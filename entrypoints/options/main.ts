@@ -12,6 +12,7 @@ const globalStatus = document.querySelector<HTMLElement>('#global-status')!;
 let state: NotebookState;
 let selectedId = '';
 let activeTab: 'landmarks' | 'tasks' = 'landmarks';
+let activeView: 'notebook' | 'data' = 'notebook';
 let undoState: { recipeId: string; recipe: TaskRecipe } | null = null;
 let modalTrigger: HTMLElement | null = null;
 
@@ -23,35 +24,38 @@ async function init() {
   selectedId = state.recipes[0]?.id ?? '';
   document.body.dataset.theme = state.preferences.theme;
   render();
-  browser.storage.onChanged.addListener(async () => { state = await loadState(); render(); });
+  browser.storage.onChanged.addListener(async () => {
+    state = await loadState();
+    if (activeView === 'notebook') render();
+  });
 }
 
 function render() {
   list.innerHTML = state.recipes.length ? state.recipes.map((recipe) => `<li><button type="button" data-select="${recipe.id}" aria-current="${recipe.id === selectedId}"><span>${escapeHtml(recipe.name)}</span><small>${escapeHtml(recipe.origin)}</small></button></li>`).join('') : '<li class="meta">No notebooks yet.</li>';
-  list.querySelectorAll<HTMLButtonElement>('[data-select]').forEach((button) => button.addEventListener('click', () => { selectedId = button.dataset.select!; render(); }));
+  list.querySelectorAll<HTMLButtonElement>('[data-select]').forEach((button) => button.addEventListener('click', () => { selectedId = button.dataset.select!; activeView = 'notebook'; render(); }));
   const recipe = state.recipes.find((item) => item.id === selectedId);
   if (!recipe) return renderEmpty();
   renderRecipe(recipe);
 }
 
 function renderEmpty() {
-  workspace.innerHTML = `<div class="empty"><div class="pin-sketch" aria-hidden="true">1</div><p class="eyebrow">Start with one recurring job</p><h2>Map the app you have to use</h2><p>Name the browser app, place a few visual landmarks, then write the steps you want spoken back.</p><button type="button" id="empty-new">Create a notebook</button><div class="callout warning"><strong>Works best with stable layouts.</strong> This tool guides you to coordinates; it does not click, read passwords, or guarantee compatibility with every remote desktop.</div></div>`;
+  workspace.innerHTML = `<div class="empty"><div class="pin-sketch" aria-hidden="true">1</div><p class="eyebrow">Start with one recurring job</p><h2>Save the app you have to use</h2><p>Name the browser app, place a few visual landmarks, then write the task steps you want spoken.</p><button type="button" id="empty-new">Create a notebook</button><div class="callout warning"><strong>Works best with stable layouts.</strong> This tool guides you to saved positions. It does not click controls or read passwords.</div></div>`;
   workspace.querySelector('#empty-new')?.addEventListener('click', openNewRecipe);
 }
 
 function renderRecipe(recipe: TaskRecipe) {
   workspace.innerHTML = `<header class="editor-head row"><div><p class="eyebrow">Notebook for ${escapeHtml(recipe.origin)}</p><h2>${escapeHtml(recipe.name)}</h2><p class="meta">${recipe.landmarks.length} landmarks · ${recipe.tasks.length} tasks</p></div><button type="button" class="danger" id="delete-recipe">Delete notebook</button></header>
-    <div class="tabs" role="tablist" aria-label="Notebook sections"><button type="button" role="tab" id="landmarks-tab" aria-selected="${activeTab === 'landmarks'}">Landmarks</button><button type="button" role="tab" id="tasks-tab" aria-selected="${activeTab === 'tasks'}">Task steps</button></div>
+    <div class="tabs" role="tablist" aria-label="Notebook sections"><button type="button" role="tab" id="landmarks-tab" aria-controls="landmarks-panel" aria-selected="${activeTab === 'landmarks'}" tabindex="${activeTab === 'landmarks' ? '0' : '-1'}">Landmarks</button><button type="button" role="tab" id="tasks-tab" aria-controls="tasks-panel" aria-selected="${activeTab === 'tasks'}" tabindex="${activeTab === 'tasks' ? '0' : '-1'}">Task steps</button></div>
     <section class="section" id="landmarks-panel" role="tabpanel" aria-labelledby="landmarks-tab" ${activeTab !== 'landmarks' ? 'hidden' : ''}>${landmarkPanel(recipe)}</section>
     <section class="section" id="tasks-panel" role="tabpanel" aria-labelledby="tasks-tab" ${activeTab !== 'tasks' ? 'hidden' : ''}>${taskPanel(recipe)}</section>`;
   bindRecipe(recipe);
 }
 
 function landmarkPanel(recipe: TaskRecipe) {
-  const items = recipe.landmarks.map((landmark, i) => `<li class="note-item row"><span class="number-pin" aria-hidden="true">${i + 1}</span><div class="item-main"><h3>${escapeHtml(landmark.name)}</h3><p>${escapeHtml(landmark.cue || 'No spoken cue')}</p><p class="meta">Position ${Math.round(landmark.x * 100)}% across, ${Math.round(landmark.y * 100)}% down</p></div><button type="button" class="danger" data-remove-landmark="${landmark.id}" aria-label="Remove ${escapeHtml(landmark.name)}">Remove</button></li>`).join('');
+  const items = recipe.landmarks.map((landmark, i) => `<li class="note-item row"><span class="number-pin" aria-hidden="true">${i + 1}</span><div class="item-main"><h3>${escapeHtml(landmark.name)}</h3><p>${escapeHtml(landmark.cue || 'No landmark description')}</p><p class="meta">Position ${Math.round(landmark.x * 100)}% across, ${Math.round(landmark.y * 100)}% down</p></div><button type="button" class="danger" data-remove-landmark="${landmark.id}" aria-label="Remove ${escapeHtml(landmark.name)}">Remove</button></li>`).join('');
   return `<div class="row"><div><h3>Visual landmarks</h3><p class="meta">Placement starts only after you press “Place on app”.</p></div></div>
     ${items ? `<ol class="plain-list">${items}</ol>` : '<div class="callout">No landmarks yet. Add the first place you need to find repeatedly.</div>'}
-    <form id="landmark-form" class="drawer"><h3>Add a landmark</h3><div class="field"><label for="landmark-name">Short name</label><input id="landmark-name" name="name" required maxlength="60" autocomplete="off"></div><div class="field"><label for="landmark-cue">Spoken cue</label><textarea id="landmark-cue" name="cue" required maxlength="240" aria-describedby="cue-hint"></textarea><p id="cue-hint" class="hint">Example: “Second pale button below the account number.” Never enter a password.</p></div><button type="submit">Place on app</button></form>`;
+    <form id="landmark-form" class="drawer"><h3>Add a landmark</h3><div class="field"><label for="landmark-name">Short name</label><input id="landmark-name" name="name" required maxlength="60" autocomplete="off"></div><div class="field"><label for="landmark-cue">Landmark description</label><textarea id="landmark-cue" name="cue" required maxlength="240" aria-describedby="cue-hint"></textarea><p id="cue-hint" class="hint">Example: “Second pale button below the account number.” Never enter a password.</p></div><button type="submit">Place on app</button></form>`;
 }
 
 function taskPanel(recipe: TaskRecipe) {
@@ -62,8 +66,19 @@ function taskPanel(recipe: TaskRecipe) {
 }
 
 function bindRecipe(recipe: TaskRecipe) {
-  workspace.querySelector('#landmarks-tab')?.addEventListener('click', () => { activeTab = 'landmarks'; render(); });
-  workspace.querySelector('#tasks-tab')?.addEventListener('click', () => { activeTab = 'tasks'; render(); });
+  const chooseTab = (tab: 'landmarks' | 'tasks', focus = false) => {
+    activeTab = tab;
+    render();
+    if (focus) workspace.querySelector<HTMLElement>(`#${tab}-tab`)?.focus();
+  };
+  workspace.querySelector('#landmarks-tab')?.addEventListener('click', () => chooseTab('landmarks'));
+  workspace.querySelector('#tasks-tab')?.addEventListener('click', () => chooseTab('tasks'));
+  workspace.querySelector('.tabs')?.addEventListener('keydown', (event) => {
+    const key = (event as KeyboardEvent).key;
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) return;
+    event.preventDefault();
+    chooseTab(key === 'ArrowLeft' || key === 'Home' ? 'landmarks' : 'tasks', true);
+  });
   workspace.querySelector('#delete-recipe')?.addEventListener('click', () => confirmDeleteRecipe(recipe));
   workspace.querySelector<HTMLFormElement>('#landmark-form')?.addEventListener('submit', async (event) => {
     event.preventDefault(); const data = new FormData(event.currentTarget as HTMLFormElement); const name = String(data.get('name') ?? '').trim(); const cue = String(data.get('cue') ?? '').trim();
@@ -74,7 +89,7 @@ function bindRecipe(recipe: TaskRecipe) {
   workspace.querySelectorAll<HTMLButtonElement>('[data-remove-landmark]').forEach((button) => button.addEventListener('click', async () => {
     undoState = { recipeId: recipe.id, recipe: structuredClone(recipe) };
     const id = button.dataset.removeLandmark!; recipe.landmarks = recipe.landmarks.filter((item) => item.id !== id); recipe.tasks.forEach((task) => task.steps.forEach((step) => { if (step.landmarkId === id) delete step.landmarkId; }));
-    await updateRecipe(recipe); showUndo('Landmark removed. Linked steps now have no pin.');
+    await updateRecipe(recipe); showUndo('Landmark removed. Linked task steps now have no landmark.');
   }));
   workspace.querySelector<HTMLFormElement>('#task-form')?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget as HTMLFormElement); recipe.tasks.push({ id: crypto.randomUUID(), name: String(data.get('name')).trim(), steps: [] }); recipe.updatedAt = Date.now(); await updateRecipe(recipe); activeTab = 'tasks'; announce('Task created.'); });
   workspace.querySelectorAll<HTMLFormElement>('[data-step-form]').forEach((form) => form.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const task = recipe.tasks.find((item) => item.id === form.dataset.stepForm)!; task.steps.push({ id: crypto.randomUUID(), text: String(data.get('text')).trim(), landmarkId: String(data.get('landmark')) || undefined }); recipe.updatedAt = Date.now(); await updateRecipe(recipe); announce('Step added.'); }));
@@ -86,16 +101,16 @@ function bindRecipe(recipe: TaskRecipe) {
 function showUndo(message: string) { announce(message); const old = document.querySelector('#undo-toast'); old?.remove(); const button = document.createElement('button'); button.id = 'undo-toast'; button.className = 'secondary'; button.textContent = 'Undo last removal'; button.addEventListener('click', async () => { if (!undoState) return; await updateRecipe(undoState.recipe); undoState = null; announce('Landmark restored.'); button.remove(); }); document.querySelector('.app-header')?.append(button); }
 
 function openNewRecipe() {
-  showModal(`<form class="modal sheet" id="new-form"><p class="eyebrow">New field notebook</p><h2>Name the browser app</h2><div class="field"><label for="recipe-name">Notebook name</label><input id="recipe-name" name="name" required maxlength="80" autofocus></div><div class="field"><label for="recipe-origin">App address</label><input id="recipe-origin" name="origin" type="url" required placeholder="https://work.example.com" aria-describedby="origin-hint"><p class="hint" id="origin-hint">Only the site origin is stored, never page content.</p></div><div class="actions"><button type="submit">Create notebook</button><button type="button" class="secondary" data-close>Cancel</button></div></form>`);
+  showModal(`<form class="modal sheet" id="new-form"><p class="eyebrow">New field notebook</p><h2>Name the browser app</h2><div class="field"><label for="recipe-name">Notebook name</label><input id="recipe-name" name="name" required maxlength="80" autofocus></div><div class="field"><label for="recipe-origin">App address</label><input id="recipe-origin" name="origin" type="url" required placeholder="https://work.example.com" aria-describedby="origin-hint"><p class="hint" id="origin-hint">Only the website address is stored. Page content is not stored.</p></div><div class="actions"><button type="submit">Create notebook</button><button type="button" class="secondary" data-close>Cancel</button></div></form>`);
   const form = modal.querySelector<HTMLFormElement>('#new-form')!;
   void browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => { const origin = httpOrigin(tab?.url); if (origin) (form.elements.namedItem('origin') as HTMLInputElement).value = origin; });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const origin = httpOrigin(String(data.get('origin'))); if (!origin) { announce('Enter a complete http or https address.', true); return; } const recipe = createRecipe(String(data.get('name')).trim(), origin); state.recipes.push(recipe); await saveState(state); selectedId = recipe.id; closeModal(); announce('Notebook created. Add its first landmark.'); });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const origin = httpOrigin(String(data.get('origin'))); if (!origin) { announce('Enter a complete http or https address.', true); return; } const recipe = createRecipe(String(data.get('name')).trim(), origin); state.recipes.push(recipe); await saveState(state); selectedId = recipe.id; activeView = 'notebook'; closeModal(); announce('Notebook created. Add its first landmark.'); });
 }
 
 function confirmDeleteRecipe(recipe: TaskRecipe) { showModal(`<section class="modal sheet" role="alertdialog" aria-modal="true" aria-labelledby="delete-title"><h2 id="delete-title">Delete “${escapeHtml(recipe.name)}”?</h2><p>This removes ${recipe.landmarks.length} landmarks and ${recipe.tasks.length} tasks from this device. Export a backup first if you need them.</p><div class="actions"><button class="danger" id="confirm-delete" type="button">Delete notebook</button><button class="secondary" type="button" data-close>Keep notebook</button></div></section>`); modal.querySelector('#confirm-delete')?.addEventListener('click', async () => { state.recipes = state.recipes.filter((item) => item.id !== recipe.id); await saveState(state); selectedId = state.recipes[0]?.id ?? ''; closeModal(); announce('Notebook deleted.'); }); }
 
 async function openDataTools() {
-  workspace.innerHTML = `<div class="editor-head"><p class="eyebrow">Local data controls</p><h2>Backup & appearance</h2></div><section><h3>Encrypted backup</h3><p>Every exported file is encrypted here with AES-256-GCM. Your passphrase is never stored.</p><div class="actions"><button id="export" type="button">Export encrypted backup</button><button id="import" class="secondary" type="button">Import backup</button><input class="visually-hidden" id="import-file" type="file" accept="application/json,.rwtr"></div></section><section class="drawer"><h3>Notebook appearance</h3><p>All three notebook covers are included locally. Landmarks, guidance, speech, and encrypted backups never require an account or purchase.</p><div class="theme-swatches"><label><input type="radio" name="theme" value="field" ${state.preferences.theme === 'field' ? 'checked' : ''}> Field paper</label><label><input type="radio" name="theme" value="blueprint" ${state.preferences.theme === 'blueprint' ? 'checked' : ''}> Blueprint</label><label><input type="radio" name="theme" value="highlighter" ${state.preferences.theme === 'highlighter' ? 'checked' : ''}> Highlighter</label></div><p class="meta"><a href="https://remote-web-task-recipes.sociobot.in/privacy" target="_blank">Privacy</a> · <a href="https://remote-web-task-recipes.sociobot.in/terms" target="_blank">Terms</a></p></section>`;
+  workspace.innerHTML = `<div class="editor-head"><p class="eyebrow">Local data controls</p><h2>Backup & appearance</h2></div><section><h3>Encrypted backup</h3><p>Every backup is encrypted here with your passphrase. Your passphrase is never stored.</p><div class="actions"><button id="export" type="button">Export encrypted backup</button><button id="import" class="secondary" type="button">Import backup</button><input class="visually-hidden" id="import-file" type="file" accept="application/json,.rwtr"></div></section><section class="drawer"><h3>Notebook appearance</h3><p>All three notebook covers are included. Landmarks, guidance, speech, and encrypted backups need no account or purchase.</p><div class="theme-swatches"><label><input type="radio" name="theme" value="field" ${state.preferences.theme === 'field' ? 'checked' : ''}> Field paper</label><label><input type="radio" name="theme" value="blueprint" ${state.preferences.theme === 'blueprint' ? 'checked' : ''}> Blueprint</label><label><input type="radio" name="theme" value="highlighter" ${state.preferences.theme === 'highlighter' ? 'checked' : ''}> Highlighter</label></div><p class="meta"><a href="https://remote-web-task-recipes.sociobot.in/privacy" target="_blank" rel="noreferrer">Privacy (opens in a new tab)</a> · <a href="https://remote-web-task-recipes.sociobot.in/terms" target="_blank" rel="noreferrer">Terms (opens in a new tab)</a></p></section>`;
   workspace.querySelectorAll<HTMLInputElement>('[name="theme"]').forEach((radio) => radio.addEventListener('change', async () => { state.preferences.theme = radio.value as NotebookState['preferences']['theme']; document.body.dataset.theme = radio.value; await saveState(state); announce('Appearance saved.'); }));
   workspace.querySelector('#export')?.addEventListener('click', () => passphraseDialog('Create backup passphrase', 'Encrypt & download', async (passphrase) => { const encrypted = await encryptNotebook(state, passphrase); const url = URL.createObjectURL(new Blob([encrypted], { type: 'application/json' })); const link = document.createElement('a'); link.href = url; link.download = `remote-task-recipes-${new Date().toISOString().slice(0,10)}.rwtr`; link.click(); URL.revokeObjectURL(url); announce('Encrypted backup downloaded.'); }));
   const input = workspace.querySelector<HTMLInputElement>('#import-file')!; workspace.querySelector('#import')?.addEventListener('click', () => input.click()); input.addEventListener('change', () => { const file = input.files?.[0]; if (file) passphraseDialog('Enter backup passphrase', 'Decrypt & import', async (passphrase) => { const imported = await decryptNotebook(await file.text(), passphrase); if (state.recipes.length && !confirm(`Replace ${state.recipes.length} current notebook${state.recipes.length === 1 ? '' : 's'} with the ${imported.recipes.length} in this backup?`)) return; state = imported; await saveState(state); selectedId = state.recipes[0]?.id ?? ''; announce('Backup imported.'); render(); }); });
@@ -113,6 +128,8 @@ function showModal(html: string) {
   if (heading && !heading.id) heading.id = 'modal-title';
   if (heading && !dialog.hasAttribute('aria-labelledby')) dialog.setAttribute('aria-labelledby', heading.id);
   modal.hidden = false;
+  document.querySelector<HTMLElement>('.app-header')!.inert = true;
+  document.querySelector<HTMLElement>('#main')!.inert = true;
   modal.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', closeModal));
   modal.addEventListener('keydown', modalKeys);
   dialog.querySelector<HTMLElement>('input,button,textarea,[href]')?.focus();
@@ -121,6 +138,8 @@ function closeModal() {
   modal.hidden = true;
   modal.innerHTML = '';
   modal.removeEventListener('keydown', modalKeys);
+  document.querySelector<HTMLElement>('.app-header')!.inert = false;
+  document.querySelector<HTMLElement>('#main')!.inert = false;
   const trigger = modalTrigger;
   modalTrigger = null;
   if (trigger?.isConnected) trigger.focus();
@@ -128,5 +147,5 @@ function closeModal() {
 function modalKeys(event: KeyboardEvent) { if (event.key === 'Escape') closeModal(); if (event.key !== 'Tab') return; const focusables = [...modal.querySelectorAll<HTMLElement>('button,input,textarea,a[href]')].filter((el) => !el.hasAttribute('disabled')); if (!focusables.length) return; const first = focusables[0], last = focusables.at(-1)!; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); } }
 
 document.querySelector('#new-recipe')?.addEventListener('click', openNewRecipe);
-document.querySelector('#data-tools')?.addEventListener('click', () => void openDataTools());
+document.querySelector('#data-tools')?.addEventListener('click', () => { activeView = 'data'; void openDataTools(); });
 void init().catch((error) => announce(`Could not open local notebook: ${String(error)}`, true));
