@@ -1,3 +1,33 @@
+# Adversarial review 8 handoff
+
+## Outcome
+
+Review 8 is **PASS**. No product code changed. The review report is
+`.factory/review-8.md`; this handoff records the independent verification at
+commit `7dbfe0d5cff3aade8dfee05904148b4787d3f582`.
+
+## Verification
+
+- Created `/tmp/rwtr-review8-clean.Ge4wkI` from the reviewed commit and ran
+  `npm ci`.
+- Ran every exact command in `.factory/claims.json` separately: all 15 passed.
+- Ran `SITE_BASE_URL=https://remote-web-task-recipes.sociobot.in npm run
+  test:site`: 7/7 passed, including the live demo, storage isolation, network
+  interception, mobile layout, Axe, route focus, 404, and offline reload.
+- Fresh live 390 x 844 and 1440 x 960 contexts had no console errors or
+  horizontal overflow. The phone hero answers the job, audience, and first
+  action before scrolling. The phone demo immediately shows the Northstar
+  landmark, its marked control, and current task step.
+- Crawled links and assets from `/`, `/demo/`, `/privacy/`, `/terms/`, and the
+  designed 404: all expected routes and same-origin links returned 200; the
+  unknown route returned 404.
+
+## Known gaps
+
+None.
+
+---
+
 # Perfection loop round 7 handoff
 
 ## Outcome
