@@ -1,3 +1,24 @@
+# Review 7 handoff
+
+## Current review outcome
+
+Completed the requested read-only adversarial review. No product code changed.
+The full result is `.factory/review-7.md`; its verdict is **FAIL** because one
+minor finding remains: `F-7-1`, the required in-page product/live preview is
+missing between the landing hero and “How to save landmarks.”
+
+Live phone and desktop checks confirmed that the existing demo itself is clear,
+one-click, isolated, resettable, and shown above the phone fold. A fresh clone
+at `/tmp/rwtr-review7-clean.QcBpZE` passed all 14 exact claim commands plus
+`npm run check`, `npm test` (16), `npm run build`, `npm run test:package`,
+`npm run test:site` (6), and `npm run test:browser` (8). Live axe-core scans,
+route/back focus, metadata, links, 404, and same-origin privacy checks passed.
+
+Next: add an accessible, non-persistent Northstar preview before “How to save
+landmarks,” assert its page position/demo link, and repeat the checklist.
+
+---
+
 # Perfection loop round 6 handoff
 
 ## Outcome
