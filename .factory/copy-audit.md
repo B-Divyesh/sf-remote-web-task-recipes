@@ -1,10 +1,16 @@
-# Copy audit — perfection loop round 4
+# Copy audit — perfection loop round 5
 
-Audited 2026-08-28 after the round-4 repair. Hyphenated terms count as one
+Audited 2026-08-28 after the round-5 repair. Hyphenated terms count as one
 word. Commands are excluded because they are commands, not visitor sentences.
 The first screen has a six-word job headline, a 16-word audience sentence, one
 sample action, its immediate outcome, and three short facts. No item below is
 over 22 words or uses a banned marketing word.
+
+## Catalog description
+
+| Words | Copy | Check |
+| ---: | --- | --- |
+| 9 | Save landmarks and task steps for repeated browser work. | Starts with a verb; 56 characters; no banned marketing word. |
 
 ## Landing page
 
