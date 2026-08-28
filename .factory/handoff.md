@@ -1,21 +1,83 @@
-# Review 7 handoff
+# Perfection loop round 7 handoff
 
-## Current review outcome
+## Outcome
 
-Completed the requested read-only adversarial review. No product code changed.
-The full result is `.factory/review-7.md`; its verdict is **FAIL** because one
-minor finding remains: `F-7-1`, the required in-page product/live preview is
-missing between the landing hero and “How to save landmarks.”
+Round 7 closes `F-7-1` and reconfirms every finding in
+`.factory/review-1.md`, `.factory/review-2.md`, `.factory/review-4.md`,
+`.factory/review-5.md`, `.factory/review-6.md`, and `.factory/review-7.md`.
+The product repair is commit
+`e2c3c13eb0e6a2415fcf9f77807b8444e6e1ecc8` (`fix: add landing product
+preview`), pushed to `origin/main`.
 
-Live phone and desktop checks confirmed that the existing demo itself is clear,
-one-click, isolated, resettable, and shown above the phone fold. A fresh clone
-at `/tmp/rwtr-review7-clean.QcBpZE` passed all 14 exact claim commands plus
-`npm run check`, `npm test` (16), `npm run build`, `npm run test:package`,
-`npm run test:site` (6), and `npm run test:browser` (8). Live axe-core scans,
-route/back focus, metadata, links, 404, and same-origin privacy checks passed.
+The landing now has a static, accessible Northstar Payroll notebook preview
+immediately after the first screen and before “How to save landmarks.” It shows
+a named **Review exceptions** landmark, its numbered payroll control, the
+current task step, and a **Try the full sample** link. It is non-persistent:
+the new `landing-preview` claim begins from no localStorage state, verifies its
+visual order and sample link, and then enters the real isolated demo. The
+preview uses the existing warm-paper, ruled-line, red-pin visual grammar rather
+than a generic card layout.
 
-Next: add an accessible, non-persistent Northstar preview before “How to save
-landmarks,” assert its page position/demo link, and repeat the checklist.
+## Deployment
+
+- Production: <https://remote-web-task-recipes.sociobot.in/>
+- Deployment command: `/opt/fleet/lib/deploy-static.sh remote-web-task-recipes /work/repo/dist/site`
+- Static host confirmed after upload: `nice-field-009f7040f.7.azurestaticapps.net`
+
+## Verification
+
+Clean clone: `/tmp/rwtr-polish7-clean.UumzKE` at `e2c3c13`, after only
+`npm ci`, using Node.js 22.23.2 and npm 10.9.8.
+
+- Every exact command in `.factory/claims.json` passed separately: 15/15
+  (`landing-preview`, `demo-workflow`, `demo-isolation`, `demo-positioning`,
+  `site-private`, `extension-private`, `package-ready`,
+  `capture-and-origin-scope`, `local-notebooks`, `temporary-capture`,
+  `manual-suggestions`, `user-control`, `free-complete`, `encrypted-backup`,
+  `artwork-provenance`).
+- `npm run check` passed.
+- `npm test` passed: 16/16.
+- `npm run test:site` passed: 7/7, including Playwright Axe scans, mobile
+  reflow, route focus, demo isolation, same-origin requests, and offline reload.
+- `npm run test:browser` passed: 8/8 fresh-profile MV3 tests.
+- `npm run build` produced `dist/site/`, the MV3 directory, and the ZIP.
+  `npm run test:package` passed; public dependency audit passed with zero
+  production vulnerabilities. `npm ci` reports ten development-tool advisories.
+- A cold production run of
+  `SITE_BASE_URL=https://remote-web-task-recipes.sociobot.in npm run test:site`
+  passed 7/7, including the new preview assertion and Axe scans.
+- `/opt/fleet/lib/verify-url.sh` recorded HTTP 200, 655 ms cold load, no
+  console errors, title, `lang=en`, one h1, main, complete image alternatives,
+  and named buttons in `.factory/evidence/polish-7/live/verify.json`.
+- Cold production checks returned 200 for `/`, `/demo/`, `/?demo=1`,
+  `/privacy/`, `/terms/`, `/robots.txt`, `/sitemap.xml`, and the extension ZIP;
+  `/not-a-real-route` returned 404. The downloaded ZIP passed `unzip -t`.
+- Live Lighthouse report: Performance 98, Accessibility 100, Best Practices
+  100, SEO 100; FCP 1.1 s, LCP 1.5 s, CLS 0.004, TBT 150 ms. The browser
+  reported a non-fatal tab-close crash after Lighthouse wrote the complete
+  report; the scored report is at `.factory/evidence/polish-7/live/lighthouse.json`.
+- Cold screenshots inspected: `home-desktop.png`, `home-mobile.png`,
+  `demo-mobile.png`, and `404-mobile.png` in `.factory/evidence/polish-7/live/`.
+
+## Run and deploy
+
+```bash
+npm ci
+npm run check
+npm test
+npm run test:site
+npm run test:browser
+npm run build
+npm run test:package
+```
+
+Run every exact command in `.factory/claims.json` separately for release
+verification. The factory deploys `dist/site/`; do not manage DNS or other
+infrastructure outside the work-order deployment step.
+
+## Known gaps
+
+None.
 
 ---
 
