@@ -61,6 +61,27 @@ npm audit --omit=dev
   factory `verify-url.sh` also passed the home-page desktop/mobile load check
   (592 ms) with zero errors.
 
+## Deployment verification
+
+Deployed with `/opt/fleet/lib/deploy-static.sh` on 2026-08-28 as Static Web
+Apps deployment `753d9368-194d-40a2-9b23-94b2d5b664ea`; the custom domain is
+live at <https://remote-web-task-recipes.sociobot.in>.
+
+- The live downloadable ZIP returned **200**, `application/zip`, immutable
+  cache control, and 131,630 bytes. `unzip -t` passed and its SHA-256 exactly
+  matched the built artifact:
+  `e008288488a218481b339285e04b6796fc84803239f8fd3da35701b072b2e3fc`.
+- Root, ZIP, and `sw.js` responses carried HSTS, CSP, nosniff,
+  Referrer-Policy, Permissions-Policy, and `X-Frame-Options: DENY`; `sw.js`
+  is `no-cache` and the ZIP is immutable.
+- Live Chromium checks on home/privacy/terms found one h1/main, `lang=en`,
+  complete alt text, zero serious/critical Axe 4.11.4 findings, no console or
+  page errors, and no outbound origin beyond the product. At 390×844 there was
+  no horizontal overflow. The service worker controlled a reload and the home
+  page reloaded offline with the expected title.
+- Lighthouse mobile: Performance **99**, Accessibility **100**, Best
+  Practices **100**, SEO **100**; FCP 1.1 s, LCP 1.4 s, CLS 0, TBT 100 ms.
+
 ## Privacy, billing, and release notes
 
 - The repair preserves local-only notebook storage, local screenshot/OCR
