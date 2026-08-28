@@ -9,6 +9,7 @@ test('@claim:demo-workflow shows the named sample and a guide that never operate
   await expect(page.locator('#landmark-list li')).toHaveCount(3);
   await expect(page.getByText('Northstar Payroll', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Step 1 of 3')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous step' })).toBeVisible();
 
   await page.locator('#submit-button').evaluate((target) => {
     target.addEventListener('click', () => { document.body.dataset.sampleClicks = '1'; });
@@ -32,7 +33,8 @@ test('@claim:demo-isolation keeps sample changes separate and discards them on e
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).step, demoKey)).toBe(0);
 
   await page.getByRole('link', { name: 'Start for real' }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/#support$/);
+  await expect(page.getByRole('link', { name: 'Download extension' }).last()).toBeFocused();
   expect(await page.evaluate((key) => localStorage.getItem(key), demoKey)).toBeNull();
 });
 
@@ -94,6 +96,7 @@ test('all public routes have complete metadata, focus, mobile layout, and no ser
     await page.goto(route);
     await expect(page).toHaveTitle(title);
     await expect(page.locator('main h1')).toBeFocused();
+    await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link')).toHaveText(['Home', 'Demo', 'Privacy', 'Download extension']);
     expect(await page.locator('h1').count()).toBe(1);
     expect(await page.locator('main').count()).toBe(1);
     expect(await page.locator('meta[name="description"]').count()).toBe(1);
@@ -109,6 +112,7 @@ test('all public routes have complete metadata, focus, mobile layout, and no ser
   const firstScreenAction = page.getByRole('link', { name: 'Try it with sample data' });
   await expect(firstScreenAction).toBeVisible();
   expect((await firstScreenAction.boundingBox())!.y).toBeLessThan(844);
+  expect((await page.locator('.facts span').last().boundingBox())!.y).toBeLessThan(844);
   await firstScreenAction.click();
   await expect(page.locator('main h1')).toBeFocused();
   await page.goBack();

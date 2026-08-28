@@ -154,7 +154,7 @@ function showGuide(recipe: TaskRecipe, taskId: string) {
     panel.setAttribute('aria-labelledby', 'rwtr-guide-title');
     panel.innerHTML = `<p class="progress">Step ${index + 1} of ${task.steps.length}</p><h2 id="rwtr-guide-title">${escapeHtml(task.name)}</h2>
       <p class="step">${escapeHtml(step.text)}</p>${landmark ? `<p class="landmark"><strong>${escapeHtml(landmark.name)}</strong><br>${escapeHtml(landmark.cue)}</p>` : ''}
-      <button type="button" class="prev secondary" ${index === 0 ? 'disabled' : ''}>Previous</button>
+      <button type="button" class="prev secondary" ${index === 0 ? 'disabled' : ''}>Previous step</button>
       <button type="button" class="next">${index === task.steps.length - 1 ? 'Finish' : 'Next step'}</button>
       <button type="button" class="speak secondary">Speak step</button><button type="button" class="close secondary">Close</button>`;
     root.append(panel);

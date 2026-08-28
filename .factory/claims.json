@@ -28,6 +28,13 @@
     "sandbox": "Intercept every request across demo placement, guide advance, reset, and Start for real; allow only the served site origin."
   },
   {
+    "id": "extension-private",
+    "claim": "The extension does not send notebook data to us or a third party.",
+    "where": "Privacy policy",
+    "test": "npm run test:browser -- --grep @claim:extension-private",
+    "sandbox": "Fresh MV3 profile; create a uniquely named notebook, capture and guide on app.test, then intercept every HTTP request and inspect local extension storage."
+  },
+  {
     "id": "package-ready",
     "claim": "The built Chrome extension opens its notebook editor and accessible dialogs from a fresh profile.",
     "where": "Landing download section, README installation steps",
@@ -64,10 +71,10 @@
   },
   {
     "id": "user-control",
-    "claim": "The guide shows one task step at a time without reading passwords or page text and without clicking the website.",
+    "claim": "The guide shows one task step at a time without inspecting page fields or clicking the website.",
     "where": "Landing, extension, terms, README",
     "test": "npm run test:browser -- --grep @claim:user-control",
-    "sandbox": "Fresh MV3 profile with password, page-text, and click sentinels; advance the guide and inspect the page and extension storage."
+    "sandbox": "Fresh MV3 profile with an isolated-world password-value getter and click sentinel; advance the guide and assert neither sentinel fires."
   },
   {
     "id": "free-complete",
@@ -82,5 +89,12 @@
     "where": "Landing, editor, privacy policy, README",
     "test": "npm test -- -t @claim:encrypted-backup",
     "sandbox": "Fresh state; encrypt a named notebook, inspect the envelope, decrypt correctly, and reject a different passphrase."
+  },
+  {
+    "id": "artwork-provenance",
+    "claim": "The landing footer identifies the project artwork as AI-assisted, with a recorded source prompt and selected source image.",
+    "where": "Landing footer, visual system record",
+    "test": "npm test -- -t @claim:artwork-provenance",
+    "sandbox": "Inspect the landing footer, source provenance record, selected image signature, dimensions, size, and SHA-256 hash."
   }
 ]

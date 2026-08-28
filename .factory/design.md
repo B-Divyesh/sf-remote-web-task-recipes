@@ -108,7 +108,7 @@ Generation command uses `/opt/fleet/lib/gen-image.sh`, Azure OpenAI deployment
 `factory-image`, 1536×1024, high quality. Generated 2026-08-27. The selected image
 is original project artwork under the repository MIT license; its exact prompt
 is stored beside the source image in `assets/src/hero-notebook.json`. The footer
-discloses AI-assisted original artwork.
+discloses AI-assisted project artwork.
 
 ## Voice
 

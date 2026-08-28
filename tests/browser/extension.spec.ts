@@ -102,6 +102,32 @@ async function setTextDetector(editor: Page, available: boolean): Promise<void> 
   }, available);
 }
 
+async function setGuideReadSentinel(editor: Page): Promise<void> {
+  await editor.evaluate(async () => {
+    const tabs = await chrome.tabs.query({});
+    const target = tabs.find((tab) => {
+      try { return new URL(tab.url ?? '').origin === 'http://app.test'; } catch { return false; }
+    });
+    if (!target?.id) throw new Error('Target tab was not found.');
+    await chrome.scripting.executeScript({
+      target: { tabId: target.id },
+      world: 'ISOLATED',
+      func: () => {
+        const password = document.querySelector<HTMLInputElement>('#password')!;
+        const value = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!;
+        Object.defineProperty(password, 'value', {
+          configurable: true,
+          get() {
+            document.documentElement.dataset.passwordReads = String(Number(document.documentElement.dataset.passwordReads ?? '0') + 1);
+            return value.get!.call(this);
+          },
+          set(next: string) { value.set!.call(this, next); }
+        });
+      }
+    });
+  });
+}
+
 test('@claim:package-ready the built MV3 package loads with accessible editor dialogs', async () => {
   const { context, extensionId, profile } = await launchExtension();
   try {
@@ -292,7 +318,7 @@ test('@claim:manual-suggestions manual placement works with and without browser 
   }
 });
 
-test('@claim:user-control guides show one step without reading or operating the website', async () => {
+test('@claim:user-control guides show one step without inspecting page fields or operating the website', async () => {
   const server = await startOriginServer();
   const { context, extensionId, profile } = await launchExtension();
   try {
@@ -300,6 +326,7 @@ test('@claim:user-control guides show one step without reading or operating the 
     await app.goto('http://app.test/');
     const editor = await context.newPage();
     await editor.goto(`chrome-extension://${extensionId}/options.html`);
+    await setGuideReadSentinel(editor);
     const recipe = structuredClone(sampleRecipe);
     recipe.landmarks.push({ id: 'landmark', name: 'Submit payroll', cue: 'Lower-right control', x: .75, y: .8, createdAt: 1 });
     recipe.tasks[0].steps[1].landmarkId = 'landmark';
@@ -313,9 +340,42 @@ test('@claim:user-control guides show one step without reading or operating the 
     await app.keyboard.press('ArrowRight');
     await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-step', '2');
     expect(await app.locator('body').getAttribute('data-target-clicks')).toBeNull();
-    const storedText = JSON.stringify(await storageSnapshot(editor));
-    expect(storedText).not.toContain('never-read-this');
-    expect(storedText).not.toContain('Private payroll total 4816');
+    await expect(app.locator('html')).not.toHaveAttribute('data-password-reads');
+  } finally {
+    await context.close();
+    await rm(profile, { recursive: true, force: true });
+    await new Promise<void>((resolveServer) => server.close(() => resolveServer()));
+  }
+});
+
+test('@claim:extension-private the extension keeps notebook data out of remote requests', async () => {
+  const server = await startOriginServer();
+  const { context, extensionId, profile } = await launchExtension();
+  const requests: string[] = [];
+  context.on('request', (request) => {
+    if (/^https?:/.test(request.url())) requests.push(request.url());
+  });
+  try {
+    const app = await context.newPage();
+    await app.goto('http://app.test/');
+    const editor = await context.newPage();
+    await editor.goto(`chrome-extension://${extensionId}/options.html`);
+    const privateRecipe = structuredClone(sampleRecipe);
+    privateRecipe.name = 'Private August payroll';
+    privateRecipe.tasks[0].steps[0].text = 'Check the private payroll total.';
+    await seedNotebook(editor, privateRecipe);
+
+    await sendCapture(editor, 'Private submit control');
+    await app.keyboard.press('Enter');
+    const guide = await editor.evaluate(async (payload) => new Promise<{ error?: string }>((resolveMessage) => {
+      chrome.runtime.sendMessage(payload, () => resolveMessage({ error: chrome.runtime.lastError?.message }));
+    }), { type: 'START_GUIDE', recipe: privateRecipe, taskId: 'task', targetOrigin: 'http://app.test' });
+    expect(guide.error).toBeUndefined();
+    await expect(app.locator('#rwtr-overlay')).toHaveAttribute('data-mode', 'guide');
+    await app.keyboard.press('Escape');
+
+    expect(JSON.stringify(await storageSnapshot(editor))).toContain('Private August payroll');
+    expect(requests.every((url) => new URL(url).origin === 'http://app.test')).toBe(true);
   } finally {
     await context.close();
     await rm(profile, { recursive: true, force: true });

@@ -21,4 +21,5 @@
 .site-footer a{margin-inline:4px}
 .hero>div,.split>div,.split>.note{min-width:0}
 .hero h1,.section h2,.legal h1,.price,.eyebrow{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:760px){.site-header{flex-direction:column;align-items:stretch;gap:12px}.site-header nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.site-header nav a,.site-header nav a:not(.button){display:inline-flex;justify-content:center;min-width:0;padding-inline:8px}.site-header nav .button{width:100%;min-height:44px;padding:8px}}
 @media(max-width:760px){.sample-app-head{flex-direction:column}.practice-panel{font-size:.88rem}.practice-actions{display:grid;grid-template-columns:1fr 1fr}.hero-art{margin-right:18px}.hero-art img{transform:none;box-shadow:6px 7px 0 var(--ink)}}

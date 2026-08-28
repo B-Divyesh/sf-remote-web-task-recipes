@@ -6,7 +6,7 @@ Remote Web Task Recipes is for screen-reader and low-vision users in hard-to-use
 A user or support worker saves visual landmarks and spoken task steps.
 The guide presents one step at a time.
 
-[Try the isolated sample](https://remote-web-task-recipes.sociobot.in/demo/) before installing anything.
+[Try the sample without changing your notebooks](https://remote-web-task-recipes.sociobot.in/demo/) before installing anything.
 
 ## What the words mean
 
@@ -22,7 +22,7 @@ The guide presents one step at a time.
 4. Choose **Load unpacked** and select the extracted folder.
 5. Pin the extension and open it from the browser toolbar.
 
-The download is a Chrome extension (Manifest V3) for manual installation.
+The download is a Chrome extension for manual installation.
 
 ## Use Remote Web Task Recipes
 
@@ -32,7 +32,7 @@ The download is a Chrome extension (Manifest V3) for manual installation.
 4. Press Escape to cancel placement.
 5. Add task steps and connect a step to a landmark when useful.
 6. Start the guide from the editor or extension menu.
-7. Use Previous, Next step, or Speak step. Escape closes the guide.
+7. Use Previous step, Next step, or Speak step. Escape closes the guide.
 8. Export an encrypted backup from **Backup & appearance**.
 
 Landmarks stay at saved screen positions.
@@ -40,8 +40,8 @@ Recheck them after the app, display scale, or window layout changes.
 
 ## Privacy and limits
 
-The extension does not operate the website.
-It does not read passwords or page text.
+The guide does not inspect page fields or click the website.
+During placement, your browser may identify text visible in the temporary screenshot.
 A screenshot exists only while landmark placement is open.
 The screenshot is not kept in extension storage.
 
@@ -52,13 +52,13 @@ Each notebook works only on the exact website where you created it.
 
 Backups hide notebook text and require the passphrase used to create them.
 There are no accounts, payment flows, analytics, advertising, or remote APIs.
-Every testable statement is listed in [.factory/claims.json](.factory/claims.json).
+Product claims and their test commands are recorded in [.factory/claims.json](.factory/claims.json).
 
 Read the [privacy policy](site/privacy/index.html) and [terms](site/terms/index.html).
 
 ## Develop, test, and build
 
-Use Node.js 20 or newer with npm.
+These release checks were run with Node.js 22.23.2 and npm 10.9.8.
 
 ```bash
 npm ci
@@ -74,6 +74,11 @@ npm run test:package
 `npm run build:extension` writes the Chrome extension to `.output/chrome-mv3/`.
 `npm run test:claims -- --grep @claim:<id>` runs one declared site claim.
 Each extension claim records its own browser-test command in the claims file.
+
+## Deploy
+
+Run `npm run build`, then give `dist/site/` to the Param Factory deployment job.
+Do not manage DNS or infrastructure from this repository.
 
 ## Project records
 

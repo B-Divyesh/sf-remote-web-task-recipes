@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -51,7 +52,8 @@ describe('static release contract', () => {
     const testSources = (await Promise.all([
       'tests/core.test.ts',
       'tests/browser/extension.spec.ts',
-      'tests/site/claims.spec.ts'
+      'tests/site/claims.spec.ts',
+      'tests/release-contract.test.ts'
     ].map((file) => readFile(resolve(root, file), 'utf8')))).join('\n');
     const found = [...testSources.matchAll(/@claim:([a-z0-9-]+)/g)].map((match) => match[1]);
     expect(new Set(found)).toEqual(new Set(claims.map((claim) => claim.id)));
@@ -77,5 +79,23 @@ describe('static release contract', () => {
       expect(html).toContain('/privacy/');
       expect(html).toContain('/terms/');
     }
+  });
+
+  it('@claim:artwork-provenance documents the AI-assisted landing artwork with its source record', async () => {
+    const [home, provenance, source] = await Promise.all([
+      readFile(resolve(root, 'site/index.html'), 'utf8'),
+      readFile(resolve(root, 'assets/src/hero-notebook.json'), 'utf8'),
+      readFile(resolve(root, 'assets/src/hero-notebook-clean.png'))
+    ]);
+    const record = JSON.parse(provenance) as { generated: string; tool: string; deployment: string; selected: string; prompt: string; edit_prompt: string };
+    const sourceInfo = await stat(resolve(root, 'assets/src/hero-notebook-clean.png'));
+    expect(home).toContain('AI-assisted project artwork.');
+    expect(record).toMatchObject({ generated: '2026-08-27', tool: '/opt/fleet/lib/gen-image.sh', deployment: 'factory-image', selected: 'hero-notebook-clean.png' });
+    expect(record.prompt).toContain('accessibility field notebook');
+    expect(record.edit_prompt).toContain('No readable text');
+    expect(source.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect([source.readUInt32BE(16), source.readUInt32BE(20)]).toEqual([1024, 1024]);
+    expect(sourceInfo.size).toBeGreaterThan(100_000);
+    expect(createHash('sha256').update(source).digest('hex')).toBe('2d7170f3816d2bdb21b33de142bd105b2523e112ea278f11e26f5f1d1300d8c7');
   });
 });

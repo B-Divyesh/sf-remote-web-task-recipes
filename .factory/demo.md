@@ -5,8 +5,8 @@ fictional Northstar Payroll website, three named landmarks, and three steps for
 submitting an August timesheet. No extension install or account is needed.
 
 The persistent banner says **Demo — sample data, nothing is saved**. **Reset
-demo** restores the sample; **Start for real** removes the demo state and goes
-home. Demo data uses only the localStorage key
+demo** restores the sample; **Start for real** removes the demo state and takes
+you to the focused **Download extension** action. Demo data uses only the localStorage key
 `demo:remote-web-task-recipes`. The extension does not read it, and the demo
 does not read or write extension storage. **Move landmark 3** opens real sample
 placement: pointer clicks or Arrow keys move it, Enter saves it, and Escape
