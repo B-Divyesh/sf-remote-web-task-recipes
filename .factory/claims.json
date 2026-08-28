@@ -1,5 +1,12 @@
 [
   {
+    "id": "landing-preview",
+    "claim": "The non-persistent landing preview shows a Northstar landmark, its marked payroll control, and the current task step before the method section.",
+    "where": "Landing page product preview",
+    "test": "npm run test:claims -- --grep @claim:landing-preview",
+    "sandbox": "Fresh 390 × 844 browser context at /; assert no local storage, the preview's visual order, named landmark, marked control, current step, and full-sample link."
+  },
+  {
     "id": "demo-workflow",
     "claim": "The one-click demo shows Northstar Payroll, a landmark, a pinned sample control, and the current task step in the first phone screen; its guide does not operate the sample app.",
     "where": "Landing first-screen action, demo, README",

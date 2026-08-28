@@ -33,6 +33,30 @@ test('@claim:demo-workflow shows the named sample and a guide that never operate
   await expect(page.locator('body')).not.toHaveAttribute('data-sample-clicks', '1');
 });
 
+test('@claim:landing-preview shows the sample interface before the method and links to the full demo', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+
+  const preview = page.locator('#product-preview');
+  const how = page.locator('#how');
+  await expect(preview.getByRole('heading', { name: 'See a landmark and task step.' })).toBeVisible();
+  await expect(preview.getByText('Northstar Payroll', { exact: true }).first()).toBeVisible();
+  await expect(preview.getByText('Review exceptions', { exact: true }).first()).toBeVisible();
+  await expect(preview.locator('.preview-control')).toContainText('Review exceptions');
+  await expect(preview.locator('.preview-pin')).toHaveAttribute('aria-label', 'Landmark 1: Review exceptions');
+  await expect(preview.getByText('Current task step', { exact: true })).toBeVisible();
+  await expect(preview.getByText('Choose Review exceptions and check the Tuesday entry.')).toBeVisible();
+  const [previewBox, howBox] = await Promise.all([preview.boundingBox(), how.boundingBox()]);
+  expect(previewBox).not.toBeNull();
+  expect(howBox).not.toBeNull();
+  expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(howBox!.y);
+  await expect(preview.getByRole('link', { name: 'Try the full sample' })).toHaveAttribute('href', '/demo/');
+  await preview.getByRole('link', { name: 'Try the full sample' }).click();
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page.getByRole('heading', { name: 'Find the payroll submit control again.' })).toBeFocused();
+});
+
 test('@claim:demo-isolation keeps sample changes separate and discards them on exit', async ({ page }) => {
   await page.goto('/?demo=1');
   await expect(page).toHaveURL(/\/demo\//);

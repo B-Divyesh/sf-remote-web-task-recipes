@@ -17,3 +17,7 @@ cancels. **Speak step** uses the browser's speech output.
 The bundled state is defined in `site/demo/main.ts`. It has no link to the
 extension's `notebookState` key. Claim tests start with a fresh browser context,
 inspect every site-storage key, and intercept the complete sample flow.
+
+The landing page has a non-persistent Northstar preview before its three-step
+method. **Try the full sample** opens this same `/demo/` sandbox; the preview
+does not create or read demo storage.

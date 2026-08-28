@@ -1,6 +1,6 @@
-# Copy audit — perfection loop round 6
+# Copy audit — perfection loop round 7
 
-Audited 2026-08-28 after the round-6 repair. Hyphenated terms count as one
+Audited 2026-08-28 after the round-7 repair. Hyphenated terms count as one
 word. Punctuation-only tokens do not count.
 `tests/release-contract.test.ts` checks every audited landing and README unit
 against its source and checks the count, wording, and sequence of this table.
@@ -14,7 +14,7 @@ marketing word.
 
 | Words | Copy | Check |
 | ---: | --- | --- |
-| 10 | Save visual landmarks and task steps for repeated browser work. | Starts with a verb; under 120 characters; no banned marketing word. |
+| 9 | Save landmarks and task steps for repeated browser work. | Starts with a verb; under 120 characters; no banned marketing word. |
 
 ## Landing page
 
@@ -34,38 +34,56 @@ marketing word.
 | L12 | 2 | Free extension | — |
 | L13 | 2 | No account | — |
 | L14 | 6 | Notebook data stays in your browser | — |
-| L15 | 4 | How to save landmarks | — |
-| L16 | 3 | Save landmarks once. | — |
-| L17 | 4 | Follow task steps later. | — |
-| L18 | 3 | Name the website | — |
-| L19 | 10 | A notebook holds landmarks and task steps for one website. | — |
-| L20 | 2 | Place landmarks | — |
-| L21 | 14 | Choose placement, then use a pointer or arrow keys to mark a visible control. | — |
-| L22 | 3 | Follow task steps | — |
-| L23 | 12 | Open the guide to read or hear one step at a time. | — |
-| L24 | 5 | It never clicks for you. | — |
-| L25 | 5 | What stays on your device | — |
-| L26 | 6 | Your landmarks stay in your browser. | — |
-| L27 | 7 | Notebooks use storage inside your browser extension. | — |
-| L28 | 6 | Screenshots are removed when placement closes. | — |
-| L29 | 12 | Text suggestions stay in placement. Choose one or place a landmark yourself. | Actionable label choice is tested |
-| L30 | 6 | Backups are encrypted with your passphrase. | — |
-| L31 | 6 | No analytics, ads, or remote control. | — |
-| L32 | 4 | When to recheck landmarks | — |
-| L33 | 6 | Landmarks stay at saved screen positions. | — |
-| L34 | 11 | Recheck them after the app, display scale, or window layout changes. | — |
-| L35 | 6 | Everything in the notebook is free | — |
-| L36 | 6 | Use every feature without an account. | — |
-| L37 | 13 | Landmarks, task guidance, speech, and encrypted backups are included in the extension download. | — |
-| L38 | 2 | Free download | — |
-| L39 | 14 | Install the package in Chrome or Chromium, then create a notebook for your website. | — |
-| L40 | 2 | Download extension | — |
-| L41 | 8 | Save landmarks and task steps for one website. | — |
-| L42 | 1 | Privacy | — |
-| L43 | 1 | Terms | — |
-| L44 | 6 | Built by Param Factory · build 1.0.1 | — |
-| L45 | 3 | AI-assisted project artwork. | — |
-| L46 | 17 | Overhead field notebook with abstract browser panels, three red landmark markers, a pencil path, and a magnifier | Meaningful image alt; clear |
+| L15 | 4 | Preview the sample notebook | — |
+| L16 | 6 | See a landmark and task step. | — |
+| L17 | 8 | Northstar Payroll is a fictional sample browser app. | — |
+| L18 | 4 | Notebook for one website | — |
+| L19 | 2 | Northstar Payroll | — |
+| L20 | 1 | northstar-payroll.example | Literal sample website |
+| L21 | 2 | Saved landmark | — |
+| L22 | 9 | Review exceptions Blue outlined button below the hours table. | — |
+| L23 | 2 | Northstar Payroll | — |
+| L24 | 3 | Timesheet: 16–31 August | — |
+| L25 | 2 | Employee hours | — |
+| L26 | 3 | Review exceptions 1 | Landmark marker label |
+| L27 | 3 | Current task step | — |
+| L28 | 3 | Submit August timesheet | — |
+| L29 | 4 | Step 1 of 3 | — |
+| L30 | 8 | Choose Review exceptions and check the Tuesday entry. | — |
+| L31 | 4 | Landmark 1: Review exceptions. | — |
+| L32 | 4 | Try the full sample | Preview action names its result |
+| L33 | 4 | How to save landmarks | — |
+| L34 | 3 | Save landmarks once. | — |
+| L35 | 4 | Follow task steps later. | — |
+| L36 | 3 | Name the website | — |
+| L37 | 10 | A notebook holds landmarks and task steps for one website. | — |
+| L38 | 2 | Place landmarks | — |
+| L39 | 14 | Choose placement, then use a pointer or arrow keys to mark a visible control. | — |
+| L40 | 3 | Follow task steps | — |
+| L41 | 12 | Open the guide to read or hear one step at a time. | — |
+| L42 | 5 | It never clicks for you. | — |
+| L43 | 5 | What stays on your device | — |
+| L44 | 6 | Your landmarks stay in your browser. | — |
+| L45 | 7 | Notebooks use storage inside your browser extension. | — |
+| L46 | 6 | Screenshots are removed when placement closes. | — |
+| L47 | 12 | Text suggestions stay in placement. Choose one or place a landmark yourself. | Actionable label choice is tested |
+| L48 | 6 | Backups are encrypted with your passphrase. | — |
+| L49 | 6 | No analytics, ads, or remote control. | — |
+| L50 | 4 | When to recheck landmarks | — |
+| L51 | 6 | Landmarks stay at saved screen positions. | — |
+| L52 | 11 | Recheck them after the app, display scale, or window layout changes. | — |
+| L53 | 6 | Everything in the notebook is free | — |
+| L54 | 6 | Use every feature without an account. | — |
+| L55 | 13 | Landmarks, task guidance, speech, and encrypted backups are included in the extension download. | — |
+| L56 | 2 | Free download | — |
+| L57 | 14 | Install the package in Chrome or Chromium, then create a notebook for your website. | — |
+| L58 | 2 | Download extension | — |
+| L59 | 8 | Save landmarks and task steps for one website. | — |
+| L60 | 1 | Privacy | — |
+| L61 | 1 | Terms | — |
+| L62 | 6 | Built by Param Factory · build 1.0.1 | — |
+| L63 | 3 | AI-assisted project artwork. | — |
+| L64 | 17 | Overhead field notebook with abstract browser panels, three red landmark markers, a pencil path, and a magnifier | Meaningful image alt; clear |
 
 ## README
 
@@ -145,6 +163,8 @@ marketing word.
 ## Flags
 
 None. The landing page has one filled first-screen action, the sample action.
+Its non-persistent Northstar preview comes before the explanatory method and
+links to the complete sample.
 Detected text is now an actionable, keyboard-operable placement choice; manual
 placement remains available. The README reports the exact tested Node/npm
 environment and the deploy section names the factory handoff boundary.

@@ -113,7 +113,7 @@ describe('static release contract', () => {
     const rows = [...audit.matchAll(/^\| ([LR]\d+) \| (\d+) \| (.*?) \| .* \|$/gm)].map((match) => ({ id: match[1], words: Number(match[2]), text: decodeEntities(match[3]) }));
     const landingRows = rows.filter((row) => row.id.startsWith('L'));
     const readmeRows = rows.filter((row) => row.id.startsWith('R'));
-    expect(landingRows.map((row) => row.id)).toEqual(Array.from({ length: 46 }, (_, index) => `L${String(index + 1).padStart(2, '0')}`));
+    expect(landingRows.map((row) => row.id)).toEqual(Array.from({ length: 64 }, (_, index) => `L${String(index + 1).padStart(2, '0')}`));
     expect(readmeRows.map((row) => row.id)).toEqual(Array.from({ length: 59 }, (_, index) => `R${String(index + 1).padStart(2, '0')}`));
     for (const row of rows) {
       const source = row.id.startsWith('L') ? `${home.replace(/<[^>]*>/g, ' ')} ${visibleLandingUnits(home).join(' ')}` : visibleReadmeText(readme);
@@ -124,7 +124,7 @@ describe('static release contract', () => {
     const catalogLine = catalog.trim();
     expect(catalogLine).toMatch(/^Save\b/);
     expect(catalogLine.length).toBeLessThanOrEqual(120);
-    expect(audit).toContain(`| 10 | ${catalogLine} |`);
+    expect(audit).toContain(`| 9 | ${catalogLine} |`);
   });
 
   it('@claim:artwork-provenance documents the AI-assisted landing artwork with its source record', async () => {

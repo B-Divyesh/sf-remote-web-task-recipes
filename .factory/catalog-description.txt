@@ -1,1 +1,1 @@
-Save visual landmarks and task steps for repeated browser work.
+Save landmarks and task steps for repeated browser work.
