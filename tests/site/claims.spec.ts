@@ -69,13 +69,14 @@ test('@claim:site-private makes only same-origin requests through the full sampl
   const requests: string[] = [];
   page.on('request', (request) => requests.push(request.url()));
   await page.goto('/demo/');
+  const productOrigin = new URL(page.url()).origin;
   await page.getByRole('button', { name: 'Move landmark 3' }).click();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Next step' }).click();
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await page.getByRole('link', { name: 'Start for real' }).click();
-  const remote = requests.filter((url) => /^https?:/.test(url) && new URL(url).origin !== 'http://127.0.0.1:4173');
+  const remote = requests.filter((url) => /^https?:/.test(url) && new URL(url).origin !== productOrigin);
   expect(remote).toEqual([]);
 });
 
